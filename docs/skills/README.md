@@ -38,6 +38,7 @@ Enforces privacy, guardrails, and secure handling of sensitive data before it re
 | :--- | :--- | :--- |
 | **[PII Masker](pii_masker.md)** | `compliance/pii_masker` | High-precision, local PII (Personally Identifiable Information) detection and redaction using the micro-f1-mask model. |
 | **[MiCA Module](mica_module.md)** | `compliance/mica_module` | Self-contained local Policy Enforcement and RAG engine strictly adhering to MiCA crypto-asset regulation. |
+| **[Terms of Service Evaluator](tos_evaluator.md)** | `compliance/tos_evaluator` | Local-first evaluation of robots.txt and website legal pages to decide whether an intended automated action appears permissible. |
 
 ---
 

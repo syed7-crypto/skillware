@@ -1,0 +1,23 @@
+{
+    "name": "TOS Evaluator",
+    "description": "Checks robots.txt and legal pages before automated website access.",
+    "icon": "shield",
+    "color": "green",
+    "ui_schema": {
+        "type": "card",
+        "fields": [
+            {
+                "key": "verdict",
+                "label": "Verdict"
+            },
+            {
+                "key": "confidence_score",
+                "label": "Confidence"
+            },
+            {
+                "key": "reason",
+                "label": "Reason"
+            }
+        ]
+    }
+}

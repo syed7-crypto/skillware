@@ -23,6 +23,7 @@ dependencies = [
     "anthropic",
     "google-generativeai",
     "pymupdf",
+    "beautifulsoup4",
 ]
 requires-python = ">=3.10"
 

@@ -1,4 +1,5 @@
 import os
+import re
 import yaml
 import json
 import importlib.util
@@ -125,6 +126,40 @@ class SkillLoader:
         parameters = manifest.get("parameters", {})
 
         return {"name": name, "description": description, "input_schema": parameters}
+
+    @staticmethod
+    def _sanitize_openai_tool_name(name: str) -> str:
+        """
+        OpenAI function names allow letters, digits, underscores, and hyphens (max 64 chars).
+        Manifest IDs such as compliance/tos_evaluator are normalized for the tools API.
+        """
+        if not name or not str(name).strip():
+            return "unknown_tool"
+        safe = re.sub(r"[^a-zA-Z0-9_-]", "_", str(name).replace("/", "_"))
+        safe = re.sub(r"_+", "_", safe).strip("_")
+        if not safe:
+            return "unknown_tool"
+        return safe[:64]
+
+    @staticmethod
+    def to_openai_tool(skill_bundle: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Converts a skill manifest to an OpenAI Chat Completions tool definition.
+        See: https://platform.openai.com/docs/guides/function-calling
+        """
+        manifest = skill_bundle.get("manifest", {})
+        raw_name = manifest.get("name", "unknown_tool")
+        description = manifest.get("description", "")
+        parameters = manifest.get("parameters", {})
+
+        return {
+            "type": "function",
+            "function": {
+                "name": SkillLoader._sanitize_openai_tool_name(raw_name),
+                "description": description,
+                "parameters": parameters,
+            },
+        }
 
     @staticmethod
     def to_ollama_prompt(skill_bundle: Dict[str, Any]) -> str:

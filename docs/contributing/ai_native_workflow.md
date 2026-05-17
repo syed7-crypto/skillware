@@ -88,9 +88,9 @@ You must:
 
 | If the issue involves... | You must also inspect |
 | :--- | :--- |
-| New or updated skill | `skills/<category>/<name>/`, `docs/skills/<name>.md`, `docs/skills/README.md`, `templates/python_skill/`, `tests/test_skill_issuer.py` |
+| New or updated skill | `skills/<category>/<name>/`, `docs/skills/<name>.md`, `docs/skills/README.md`, `templates/python_skill/`, `tests/test_skill_issuer.py`, and when documenting integration: `docs/usage/README.md`, [agent_loops.md](../usage/agent_loops.md), [skill_usage_template.md](../usage/skill_usage_template.md), matching `examples/*.py` if present |
 | Core framework | `skillware/core/`, `tests/test_loader.py`, `docs/usage/` |
-| Documentation only | `docs/`, `README.md`, `CONTRIBUTING.md`, inbound links |
+| Documentation only | `docs/`, `README.md`, `CONTRIBUTING.md`, inbound links; for skill catalog or provider integration work, also `docs/usage/` and `docs/skills/` |
 | Bug fix | Failing test, reproduction steps, related skill or loader code |
 | Good first issue | Issue labels and acceptance criteria—take them literally |
 
@@ -220,6 +220,7 @@ These align with [CONTRIBUTING.md](../../CONTRIBUTING.md). Violations block merg
 - `issuer.name` and `issuer.email` required; `github` and `org` optional; no template placeholders in registry paths
 - `card.json` issuer must match manifest `name` and `email` when present
 - Update `docs/skills/<skill_name>.md` and `docs/skills/README.md`
+- On each catalog page, add a **Usage Examples** section (Gemini, Claude, OpenAI, DeepSeek, Ollama prompt mode) per [skill usage template](../usage/skill_usage_template.md). Keep provider mechanics in `docs/usage/`; put skill-specific paths, sample user messages, and `execute` payloads on the skill page.
 - Categories: `compliance`, `data_engineering`, `finance`, `office`, `optimization`—propose new ones in the issue first
 - Do not bump `pyproject.toml` version in skill-only PRs unless requested
 - Logic in `skill.py`; prompts and persona in `instructions.md`
@@ -236,6 +237,7 @@ These align with [CONTRIBUTING.md](../../CONTRIBUTING.md). Violations block merg
 
 - Fix broken links when you move files
 - Link to [TESTING.md](../TESTING.md) instead of duplicating long command lists
+- Provider integration: [Usage guides index](../usage/README.md) and [agent loops](../usage/agent_loops.md). Per-skill copy-paste examples belong on `docs/skills/<skill_name>.md`, not repeated in full on every provider guide.
 
 ### Conduct
 
@@ -256,6 +258,7 @@ Complete the checklist that matches your issue during Stage 5.
 - [ ] `card.json`: `issuer` matches manifest
 - [ ] `test_skill.py` passes
 - [ ] `docs/skills/<skill_name>.md` and catalog row in `docs/skills/README.md`
+- [ ] **Usage Examples** on the catalog page (all five providers per [skill usage template](../usage/skill_usage_template.md)); link to `docs/usage/` and list skill `env_vars` without duplicating [api_keys.md](../usage/api_keys.md)
 - [ ] `pytest tests/test_skill_issuer.py` passes
 - [ ] `SkillLoader.load_skill("<category>/<skill_name>")` works or deps are documented
 - [ ] No placeholders under `skills/`
@@ -267,7 +270,7 @@ Complete the checklist that matches your issue during Stage 5.
 - [ ] Links valid
 - [ ] No emojis; tone matches repo
 - [ ] No unrelated code changes
-- [ ] PR marked as documentation; skill checklist omitted
+- [ ] PR marked as documentation; skill checklist omitted unless `docs/skills/` or skill **Usage Examples** changed (then apply the Usage Examples bullet above)
 
 ### Core framework
 
@@ -326,6 +329,10 @@ Run this internal dialogue before you hand off to your operator.
 
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — contribution hub and skill standard
 - [TESTING.md](../TESTING.md) — Black, Flake8, Pytest
+- [Usage guides](../usage/README.md) — provider adapters (`to_gemini_tool`, `to_openai_tool`, etc.)
+- [Agent loops](../usage/agent_loops.md) — shared load / execute / tool-result pattern
+- [Skill usage example template](../usage/skill_usage_template.md) — what each skill catalog page must include
+- [API keys for skills](../usage/api_keys.md) — env setup (link from skill pages; do not duplicate)
 - [Agent Code of Conduct](../../CODE_OF_CONDUCT.md)
 - [Pull request template](../../.github/PULL_REQUEST_TEMPLATE.md)
 - [Skill library](../skills/README.md)

@@ -34,48 +34,106 @@ The system prompt teaches the main Agent to:
 
 Configure values per [API keys for skills](../usage/api_keys.md).
 
-## Integration & Configuration
+## Usage Examples
 
-This skill is designed for high-performance agentic loops without relying on opaque native tool APIs. 
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md) · [API keys](../usage/api_keys.md).
 
-### Pure Cognitive Integration
+| Provider | Reference script |
+| :--- | :--- |
+| Gemini / RAG | `examples/mica_rag_flow.py` |
+| Claude | `examples/mica_claude_flow.py` |
+| Ollama | `examples/mica_ollama_flow.py` |
 
-This is the recommended pattern for Gemini, Claude, and Llama agents:
+Sample user message: *Can I issue a stablecoin backed by physical art under an e-money license?*
 
-1.  **Inject Manifest**: Pass the `manifest.yaml` and `instructions.md` as text into the System Prompt.
-2.  **Streaming Loop**: Enable streaming to observe the agent's "Thinking" turn as it identifies the need for RAG.
-3.  **Local Execution**: When the agent outputs the skill JSON, execute `mica_skill.execute()` locally and feed the results back to the agent.
-
-### Swapping Evaluator Models
-
-You can dynamically swap the internal evaluator model to another supported target using the `evaluator_model` parameter.
+### Direct execute
 
 ```python
 from skillware.core.loader import SkillLoader
 
-# 1. Load the Skill
-skill_bundle = SkillLoader.load_skill("compliance/mica_module")
-MiCAModuleSkill = skill_bundle['module'].MiCAModuleSkill
-
-# 2. Initialize
-validator = MiCAModuleSkill()
-
-# 3. Execute - With the Optional Evaluator Swapped Out!
-result = validator.execute({
+bundle = SkillLoader.load_skill("compliance/mica_module")
+skill = bundle["module"].MiCAModuleSkill()
+result = skill.execute({
     "user_prompt": "Can I issue a stablecoin backed by physical art under an e-money license?",
-    
-    # ---------------------------------------------
-    # Evaluator Engine Configuration Options
-    # ---------------------------------------------
-    "run_evaluator": True,                           # Enable the built-in grading loop
-    "evaluator_model": "gemini-1.5-pro-latest"       # Swap out the default flash-lite model!
+    "run_evaluator": True,
+    "evaluator_model": "gemini-2.5-flash",
 })
-
-# Access Policy Results
-print(f"Status: {result['policy_status']}")
-if result['policy_status'] == 'HIGH_RISK_DETECTED':
-    print(f"Holes: {result['gemini_evaluator_feedback']['holes_found']}")
+print(result["policy_status"])
 ```
+
+### Gemini
+
+```python
+import os
+import google.generativeai as genai
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/mica_module")
+skill = bundle["module"].MiCAModuleSkill()
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    tools=[SkillLoader.to_gemini_tool(bundle)],
+    system_instruction=bundle["instructions"],
+)
+# On function_call (name compliance/mica_module): skill.execute(dict(part.function_call.args))
+```
+
+### Claude
+
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/mica_module")
+skill = bundle["module"].MiCAModuleSkill()
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# See examples/mica_claude_flow.py for the full loop
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/mica_module")
+skill = bundle["module"].MiCAModuleSkill()
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Match tool_call.function.name (compliance_mica_module)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/mica_module")
+skill = bundle["module"].MiCAModuleSkill()
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+```
+
+### Ollama
+
+`SkillLoader.to_ollama_prompt(bundle)`; match `"tool": "compliance/mica_module"`. See `examples/mica_ollama_flow.py` and [Ollama usage](../usage/ollama.md).
 
 ## Data Schema Output
 

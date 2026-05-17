@@ -38,26 +38,103 @@ The system prompt teaches the internal mapping engine to:
 
 Configure values per [API keys for skills](../usage/api_keys.md).
 
-### Usage (Skillware Loader)
+## Usage Examples
+
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md) · [API keys](../usage/api_keys.md).
+
+| Provider | Reference script |
+| :--- | :--- |
+| Gemini | `examples/gemini_pdf_form_filler.py` |
+| Claude | `examples/claude_pdf_form_filler.py` |
+
+### Direct execute
 
 ```python
 from skillware.core.loader import SkillLoader
 
-# 1. Load the Skill
-skill_bundle = SkillLoader.load_skill("office/pdf_form_filler")
-PDFFormFillerSkill = skill_bundle['module'].PDFFormFillerSkill
-
-# 2. Initialize
-filler = PDFFormFillerSkill()
-
-# 3. Execute
+bundle = SkillLoader.load_skill("office/pdf_form_filler")
+filler = bundle["module"].PDFFormFillerSkill()
 result = filler.execute({
     "pdf_path": "/absolute/path/to/form.pdf",
-    "instructions": "Name: John Doe. Check the terms of service box."
+    "instructions": "Name: John Doe. Check the terms of service box.",
 })
-
-print(f"Filled PDF saved to: {result['output_path']}")
+print(result["output_path"])
 ```
+
+### Gemini
+
+```python
+import os
+import google.generativeai as genai
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("office/pdf_form_filler")
+skill = bundle["module"].PDFFormFillerSkill()
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    tools=[SkillLoader.to_gemini_tool(bundle)],
+    system_instruction=bundle["instructions"],
+)
+# User: "Fill /path/to/form.pdf — name John Doe, check the terms box."
+# On function_call (name pdf_form_filler): skill.execute(dict(part.function_call.args))
+```
+
+### Claude
+
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("office/pdf_form_filler")
+skill = bundle["module"].PDFFormFillerSkill()
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# On tool_use (name pdf_form_filler): skill.execute(tool_use.input), return tool_result
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("office/pdf_form_filler")
+skill = bundle["module"].PDFFormFillerSkill()
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Match tool_call.function.name to openai_tool["function"]["name"] (pdf_form_filler)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("office/pdf_form_filler")
+skill = bundle["module"].PDFFormFillerSkill()
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+```
+
+### Ollama
+
+`SkillLoader.to_ollama_prompt(bundle)`; match `"tool": "pdf_form_filler"`. See [Ollama usage](../usage/ollama.md).
 
 ## 📊 Data Schema
 

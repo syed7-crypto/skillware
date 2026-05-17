@@ -55,14 +55,104 @@ The `micro-f1-mask` model detects a variety of entities, including but not limit
 - Crypto Wallets (`[CRYPTO_ADDRESS]`)
 - Identification Numbers (SSN, Passports, etc.)
 
-## Example Usage
+## Usage Examples
 
-Input text:
-```text
-Hello John Doe, your wallet 0xabc123 has been verified.
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md). Skill execution uses local Ollama (`arpacorp/micro-f1-mask`); no cloud agent key required for the masker itself.
+
+Reference flow: `examples/pii_guardrail_flow.py`.
+
+Sample user message: *Mask PII in: "Hello John Doe, your wallet 0xabc123 has been verified."*
+
+### Direct execute
+
+```python
+from skillware.core.loader import SkillLoader
+
+bundle = SkillLoader.load_skill("compliance/pii_masker")
+skill = bundle["module"].PIIMaskerSkill()
+result = skill.execute({
+    "text": "Hello John Doe, your wallet 0xabc123 has been verified.",
+    "mode": "mask",
+})
+print(result["sanitized_text"])
 ```
 
-JSON Return (mask mode):
+### Gemini
+
+```python
+import os
+import google.generativeai as genai
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/pii_masker")
+skill = bundle["module"].PIIMaskerSkill()
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    tools=[SkillLoader.to_gemini_tool(bundle)],
+    system_instruction=bundle["instructions"],
+)
+# On function_call (name compliance/pii_masker): skill.execute(...) before sending user text upstream
+```
+
+### Claude
+
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/pii_masker")
+skill = bundle["module"].PIIMaskerSkill()
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# On tool_use (name compliance/pii_masker): skill.execute(tool_use.input)
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/pii_masker")
+skill = bundle["module"].PIIMaskerSkill()
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Match tool_call.function.name (compliance_pii_masker)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/pii_masker")
+skill = bundle["module"].PIIMaskerSkill()
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+```
+
+### Ollama
+
+`SkillLoader.to_ollama_prompt(bundle)`; match `"tool": "compliance/pii_masker"`. Ensure `ollama run arpacorp/micro-f1-mask` is available. See [Ollama usage](../usage/ollama.md).
+
+### Sample output (mask mode)
+
 ```json
 {
   "sanitized_text": "Hello [PERSON_1], your wallet [CRYPTO_ADDRESS] has been verified.",

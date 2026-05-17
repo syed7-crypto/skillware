@@ -10,7 +10,7 @@ Starter bundle under `skills/<category>/<skill_name>/`. Copy this template from 
 4. **`instructions.md`**: Tell the agent when and how to use the tool.
 5. **`card.json`**: Mirror `issuer` from the manifest; customize UI fields.
 6. **`test_skill.py`**: Add tests; run `pytest skills/<category>/<skill_name>/test_skill.py`.
-7. **`docs/skills/<skill_name>.md`**: Add a catalog page with **ID** and **Issuer** lines.
+7. **`docs/skills/<skill_name>.md`**: Catalog page with **ID**, **Issuer**, and **Usage Examples** (all providers; see `docs/usage/skill_usage_template.md`).
 8. **`docs/skills/README.md`**: Add a row to the skill library table.
 
 Do not commit template placeholders (`Your Name`, `you@example.com`, `YOUR ORG`, etc.) under `skills/`—only real issuer details belong in the registry.

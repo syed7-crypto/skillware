@@ -5,9 +5,10 @@ Skillware natively supports [Ollama](https://ollama.com/), enabling you to run o
 ## Prerequisites
 
 1.  **Install Ollama:** Follow the instructions at [ollama.com](https://ollama.com/) to install Ollama on your machine.
-2.  **Pull a Model:** You need a model that supports tool calling. We recommend `llama3` or `llama3.1`.
+2.  **Pull a Model:** Use a model that follows instructions reliably in prompt mode (JSON tool blocks). Examples: `gemma3`, `qwen3.5`, or `llama3.1`.
     ```bash
-    ollama run llama3
+    ollama pull gemma3
+    ollama run gemma3
     ```
 3.  **Install Python Client:** Install the official Ollama Python package.
     ```bash
@@ -62,7 +63,7 @@ messages = [
 ]
 
 # 3. Call the Ollama Model
-model_name = "llama3"
+model_name = "gemma3"
 print(f"🤖 Calling Ollama model: {model_name}...")
 response = ollama.chat(
     model=model_name,

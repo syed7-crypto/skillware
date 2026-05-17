@@ -53,33 +53,101 @@ Tools to keep the knowledge fresh.
 
 Configure values per [API keys for skills](../usage/api_keys.md). This skill reads the names declared in `skills/finance/wallet_screening/manifest.yaml`.
 
-For Gemini agent loops that invoke this skill, you also need `GOOGLE_API_KEY` in your environment (see [Gemini usage](../usage/gemini.md)).
+Agent loops also need a provider API key (for example `GOOGLE_API_KEY` with Gemini); see [Gemini usage](../usage/gemini.md).
 
-### Usage (Gemini 2.0)
+## Usage Examples
+
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md) · [API keys](../usage/api_keys.md).
+
+Sample user message: *Screen wallet `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` for sanctions and malicious contract interactions.*
+
+| Provider | Reference script |
+| :--- | :--- |
+| Gemini | `examples/gemini_wallet_check.py` |
+| Claude | `examples/claude_wallet_check.py` |
+
+### Gemini
 
 ```python
 import os
 import google.generativeai as genai
+from skillware.core.env import load_env_file
 from skillware.core.loader import SkillLoader
 
-# 1. Load the Skill Bundle
-skill = SkillLoader.load_skill("finance/wallet_screening")
-
-# 2. Configure Model
+load_env_file()
+bundle = SkillLoader.load_skill("finance/wallet_screening")
+skill = bundle["module"].WalletScreeningSkill(
+    config={"ETHERSCAN_API_KEY": os.environ.get("ETHERSCAN_API_KEY")}
+)
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel(
-    'gemini-2.0-flash-exp',
-    tools=[SkillLoader.to_gemini_tool(skill)],     # <--- Adapter
-    system_instruction=skill['instructions']        # <--- Injection
+    "gemini-2.5-flash",
+    tools=[SkillLoader.to_gemini_tool(bundle)],
+    system_instruction=bundle["instructions"],
 )
-
-# 3. Chat Loop with Feedback
-chat = model.start_chat()
-response = chat.send_message("Is wallet 0xd8dA... safe?")
-
-# 4. Handle Tool Call
-# (See examples/gemini_wallet_check.py for the full loop)
+# On function_call (name wallet_screening): skill.execute(dict(part.function_call.args))
 ```
+
+### Claude
+
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("finance/wallet_screening")
+skill = bundle["module"].WalletScreeningSkill(
+    config={"ETHERSCAN_API_KEY": os.environ.get("ETHERSCAN_API_KEY")}
+)
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# On tool_use (name wallet_screening): skill.execute(tool_use.input), return tool_result
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("finance/wallet_screening")
+skill = bundle["module"].WalletScreeningSkill(
+    config={"ETHERSCAN_API_KEY": os.environ.get("ETHERSCAN_API_KEY")}
+)
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Match tool_call.function.name to openai_tool["function"]["name"] (wallet_screening)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("finance/wallet_screening")
+skill = bundle["module"].WalletScreeningSkill(
+    config={"ETHERSCAN_API_KEY": os.environ.get("ETHERSCAN_API_KEY")}
+)
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+# chat.completions.create(model="deepseek-chat", tools=[deepseek_tool], ...)
+```
+
+### Ollama
+
+Prompt mode via `SkillLoader.to_ollama_prompt(bundle)`; match `"tool": "wallet_screening"` in the JSON block. See [Ollama usage](../usage/ollama.md) and [agent loops](../usage/agent_loops.md).
 
 ## 📊 Data Schema
 

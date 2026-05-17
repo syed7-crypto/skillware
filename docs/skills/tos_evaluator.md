@@ -74,25 +74,101 @@ print(result["verdict"])
 print(result["reason"])
 ```
 
-## Gemini Example
+## Usage Examples
 
-Use the skill through `SkillLoader.to_gemini_tool(...)` and pass the skill instructions as the `system_instruction`. See `examples/gemini_tos_evaluator.py`.
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md) · [API keys](../usage/api_keys.md) (optional `GOOGLE_API_KEY` for the LLM evaluator path).
 
-## Claude Example
+Sample user message: *Before crawling https://example.com/docs, check if automated indexing is allowed.*
 
-Use the skill through `SkillLoader.to_claude_tool(...)` and return the structured result back to Claude as a tool result. See `examples/claude_tos_evaluator.py`.
+| Provider | Reference script |
+| :--- | :--- |
+| Gemini | `examples/gemini_tos_evaluator.py` |
+| Claude | `examples/claude_tos_evaluator.py` |
+| OpenAI | `examples/openai_tos_evaluator.py` |
+| DeepSeek | `examples/deepseek_tos_evaluator.py` |
+| Ollama | `examples/ollama_tos_evaluator.py` |
 
-## OpenAI Example
+### Gemini
 
-Use `SkillLoader.to_openai_tool(...)` and match tool calls on the sanitized function name (for example `compliance_tos_evaluator`). See `examples/openai_tos_evaluator.py`.
+```python
+import os
+import google.generativeai as genai
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
 
-## DeepSeek Example
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/tos_evaluator")
+skill = bundle["module"].TOSEvaluatorSkill()
+tool = SkillLoader.to_gemini_tool(bundle)
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    tools=[tool],
+    system_instruction=bundle["instructions"],
+)
+chat = model.start_chat()
+response = chat.send_message(
+    "Check whether crawling https://example.com/docs is allowed."
+)
+# On function_call: skill.execute(dict(part.function_call.args)), return function_response
+```
 
-Use `SkillLoader.to_deepseek_tool(...)` with the DeepSeek API base URL and `DEEPSEEK_API_KEY`. See `examples/deepseek_tos_evaluator.py`.
+### Claude
 
-## Ollama Example
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
 
-Use the text-based prompt adapter from `SkillLoader.to_ollama_prompt(...)` and execute the skill locally when the model emits a JSON tool block. See `examples/ollama_tos_evaluator.py`.
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/tos_evaluator")
+skill = bundle["module"].TOSEvaluatorSkill()
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# messages.create(..., system=bundle["instructions"], tools=tools)
+# On tool_use: skill.execute(tool_use.input), reply with tool_result
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/tos_evaluator")
+skill = bundle["module"].TOSEvaluatorSkill()
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# chat.completions.create(model="gpt-4o", tools=[openai_tool], ...)
+# Match tool_call.function.name to openai_tool["function"]["name"] (compliance_tos_evaluator)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("compliance/tos_evaluator")
+skill = bundle["module"].TOSEvaluatorSkill()
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+# chat.completions.create(model="deepseek-chat", tools=[deepseek_tool], ...)
+```
+
+### Ollama
+
+Prompt-based tool calling. Pull a model such as `gemma3` or `qwen3.5`, then see `examples/ollama_tos_evaluator.py` and [Ollama usage](../usage/ollama.md).
 
 ## Notes
 

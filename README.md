@@ -127,6 +127,8 @@ print(response.text)
 
 *   **[Core Logic & Philosophy](docs/introduction.md)**: Details on how Skillware decouples Logic, Cognition, and Governance.
 *   **[Testing Guidelines](docs/TESTING.md)**: Instructions for validating skills and checking local coverage.
+*   **[Usage guides](docs/usage/README.md)**: Provider adapters and navigation to integration docs.
+*   **[Agent loops](docs/usage/agent_loops.md)**: Shared load, tool-call, and `execute` pattern across providers.
 *   **[Usage Guide: Gemini](docs/usage/gemini.md)**: Integration with Google's GenAI SDK.
 *   **[Usage Guide: Claude](docs/usage/claude.md)**: Integration with Anthropic's SDK.
 *   **[Usage Guide: OpenAI](docs/usage/openai.md)**: Integration with OpenAI Chat Completions tool calling.

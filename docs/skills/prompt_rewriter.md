@@ -20,26 +20,99 @@ This is critical for complex agents facing strict token constraints or high LLM 
 *   `new_tokens` (integer): The approximate new length.
 *   `tokens_saved` (integer): The absolute number of tokens removed.
 
-## Example Usage (Skill Chaining)
+## Usage Examples
 
-The agent invokes this tool automatically when faced with an excessively long context or when instructed to compress a payload. However, you can also use it as a manual middleware step:
+Guides: [Usage index](../usage/README.md) · [Agent loops](../usage/agent_loops.md). No skill-specific API keys.
+
+Sample user message: *Compress this prompt before the main model call: "Hello, could you please make sure to read this documentation..."*
+
+### Direct execute
 
 ```python
 from skillware.core.loader import SkillLoader
 
-# 1. Load the middleware
-rewriter_bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
-rewriter = rewriter_bundle['module'].PromptRewriter()
-
-# 2. Compress a prompt before sending to LLM
+bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
+rewriter = bundle["module"].PromptRewriter()
 result = rewriter.execute({
     "raw_text": "Hello, could you please make sure to read this documentation...",
-    "compression_aggression": "high"
+    "compression_aggression": "high",
 })
-
-print(f"Compressed: {result['compressed_text']}")
-# Output: "read documentation..."
+print(result["compressed_text"])
 ```
+
+### Gemini
+
+```python
+import os
+import google.generativeai as genai
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
+skill = bundle["module"].PromptRewriter()
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+    tools=[SkillLoader.to_gemini_tool(bundle)],
+    system_instruction=bundle["instructions"],
+)
+# On function_call (name optimization/prompt_rewriter): skill.execute(dict(part.function_call.args))
+```
+
+### Claude
+
+```python
+import os
+import anthropic
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
+skill = bundle["module"].PromptRewriter()
+client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+tools = [SkillLoader.to_claude_tool(bundle)]
+# On tool_use (name optimization/prompt_rewriter): skill.execute(tool_use.input)
+```
+
+### OpenAI
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
+skill = bundle["module"].PromptRewriter()
+openai_tool = SkillLoader.to_openai_tool(bundle)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Match tool_call.function.name to openai_tool["function"]["name"] (optimization_prompt_rewriter)
+```
+
+### DeepSeek
+
+```python
+import os
+from openai import OpenAI
+from skillware.core.env import load_env_file
+from skillware.core.loader import SkillLoader
+
+load_env_file()
+bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
+skill = bundle["module"].PromptRewriter()
+deepseek_tool = SkillLoader.to_deepseek_tool(bundle)
+client = OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+```
+
+### Ollama
+
+`SkillLoader.to_ollama_prompt(bundle)`; match `"tool": "optimization/prompt_rewriter"`. See [Ollama usage](../usage/ollama.md).
 
 ## Maintenance
 

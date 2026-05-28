@@ -192,7 +192,7 @@ Also read the [Agent Code of Conduct](CODE_OF_CONDUCT.md). Open PRs with the [pu
 
 ## Comparison
 
-Skillware differs from the Model Context Protocol (MCP), and Anthropic's Skills repository in several ways:
+Skillware differs from the Model Context Protocol (MCP), and Agent Skills (SKILL.md) in several ways:
 
 *   **Model Agnostic**: Native adapters for Gemini, Claude, Ollama, and OpenAI.
 *   **Code-First**: Skills are executable Python packages, not just server specs.

@@ -278,6 +278,7 @@ Place each skill under one top-level directory under `skills/`. Use an existing 
 | `compliance` | Privacy, policy, regulatory guardrails | `pii_masker`, `mica_module`, `tos_evaluator` |
 | `data_engineering` | Datasets, generation, ETL-style tooling | `synthetic_generator` |
 | `finance` | Blockchain, risk, financial analysis | `wallet_screening` |
+| `defi` | On-chain trading and agent wallet execution | `evm_tx_handler` |
 | `office` | Documents, productivity | `pdf_form_filler` |
 | `optimization` | Middleware, compression, efficiency | `prompt_rewriter` |
 

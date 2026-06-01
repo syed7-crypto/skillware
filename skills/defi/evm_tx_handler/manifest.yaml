@@ -1,0 +1,62 @@
+name: evm_tx_handler
+version: 0.1.0
+description: |
+  Operates a dedicated EVM agent wallet for structured buy/sell quotes, previews,
+  and transfers on Ethereum and Base. PR1: resolve, quote, preview, transfer,
+  balances, wallet_info. Swap execution (execute) follows in PR2.
+short_description: "EVM agent wallet — quote, preview, and transfer from structured intent."
+category: defi
+issuer:
+  name: Hendobox
+  email: 50964581+Hendobox@users.noreply.github.com
+  github: Hendobox
+parameters:
+  type: object
+  properties:
+    action:
+      type: string
+      enum:
+        - resolve
+        - quote
+        - preview
+        - execute
+        - transfer
+        - balances
+        - wallet_info
+        - update_preferences
+      description: Skill operation to run.
+    intent:
+      type: object
+      description: |
+        Partial or full trade/send intent (side, chain, assets, amount, recipient, gas_policy).
+    confirmed:
+      type: boolean
+      description: Required true for transfer when confirm_before_send is enabled.
+    preferences:
+      type: object
+      description: Long-term preference updates (update_preferences only).
+  required:
+    - action
+constitution: |
+  1. DEDICATED WALLET ONLY: Use a separate agent wallet funded with limited funds — never a personal or treasury wallet.
+  2. NOT FINANCIAL ADVICE: Quotes and transfers are technical operations, not investment recommendations.
+  3. AGENT ERROR RISK: Natural language may be mis-parsed; always preview amounts and addresses before confirmed transfers.
+  4. SECRETS: Private keys live only in .env (AGENT_WALLET_PRIVATE_KEY). Never pass keys in tool args, YAML, or logs.
+  5. FAIL CLOSED: Missing RPC, registry entries, or confirmation when required must abort — do not guess.
+  6. MARKET RISK: Slippage and prices move; on-chain results may differ from quotes.
+env_vars:
+  AGENT_WALLET_PRIVATE_KEY:
+    description: "Private key for the dedicated agent wallet (hex, with or without 0x prefix)."
+    required: true
+  ETHEREUM_RPC_URL:
+    description: "JSON-RPC URL for Ethereum mainnet (required when using chain ethereum)."
+    required: false
+  BASE_RPC_URL:
+    description: "JSON-RPC URL for Base (required when using chain base)."
+    required: false
+  COINGECKO_API_KEY:
+    description: "Optional; reserved for USD estimates in later releases."
+    required: false
+requirements:
+  - web3>=6.0.0
+  - pyyaml

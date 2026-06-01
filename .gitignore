@@ -1,6 +1,9 @@
 # Environment Variables
 .env
 
+# Per-skill local config (use config.yaml.example as template)
+skills/**/config.yaml
+
 # Python
 __pycache__/
 *.pyc

@@ -1,4 +1,5 @@
-# Development convenience — installs core + all optional extras for local work.
+# Development convenience — same install GitHub Actions CI uses (see pyproject.toml).
+# Installs core + dev tools (pytest, flake8, black) + all optional SDK extras.
 # For production installs use pyproject.toml extras instead, e.g.:
 #   pip install skillware                  # core only
 #   pip install "skillware[cli]"           # + rich terminal

@@ -33,9 +33,7 @@ If you need regulatory context, output a JSON block like this:
 Wait for the response before making your final compliant determination.
 """
 
-    user_query = (
-        "How do I get an authorization to be a crypto-asset service provider (CASP) in the EU?"
-    )
+    user_query = "How do I get an authorization to be a crypto-asset service provider (CASP) in the EU?"
 
     print(f"\n[User]: {user_query}")
     print("-" * 50)

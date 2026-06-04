@@ -2,7 +2,9 @@
 
 Skillware is a Python framework that decouples AI tool logic, cognition, and governance into self-contained, installable modules called **Skills**. For the project story and roadmap, see [docs/vision.md](docs/vision.md).
 
-This document clarifies how Skillware compares to other common approaches for equipping AI agents with tools, including **Model Context Protocol (MCP)**, **Anthropic Skills**, **LangChain Tools**, **AutoGen**, and others.
+This document clarifies how Skillware compares to other common approaches for equipping AI agents with tools, including **Model Context Protocol (MCP)**, **Agent Skills (SKILL.md)**, **LangChain Tools**, **AutoGen**, and others.
+
+**A note on ecosystem convergence**: [Agent Skills](https://agentskills.io) and MCP address adjacent problems—host-level agent guidance and tool transport, respectively. Skillware remains a runtime capability framework built on a typed `manifest.yaml` → `execute()` contract; there is no plan to replace the Skill Package Standard with the SKILL.md format.
 
 ---
 
@@ -26,24 +28,26 @@ Skill detail: [wallet_screening.md](docs/skills/wallet_screening.md). Multi-laye
 The [Model Context Protocol](https://github.com/modelcontextprotocol) (MCP) is an open standard that connects AI models to data sources and tools via a client-server architecture.
 
 ### Key Differences
-*   **Architecture**: MCP operates on a **Client-Server** model (using JSON-RPC over stdio or SSE). This requires running and managing separate servers for your tools. Skillware is **Python-Native**. It operates entirely within the Python runtime via library imports (`SkillLoader`). There is no network overhead or need to deploy external servers.
-*   **Deployment Complexity**: MCP is powerful for language-agnostic, distributed systems but introduces significant infrastructure overhead. Skillware is designed for direct embedding into GenAI application pipelines, making it trivial to deploy.
+*   **Architecture**: MCP operates on a **Client-Server** model (using JSON-RPC over stdio or SSE). While local stdio servers are an option, running and managing separate server processes is the norm. Skillware is **Python-Native**: it operates entirely within the Python runtime via library imports (`SkillLoader`) with no network overhead.
+*   **Deployment Complexity**: MCP is powerful for language-agnostic, distributed systems and can run locally via stdio; Skillware is designed for direct in-process embedding into GenAI application pipelines. The two are complementary layers—MCP as a tool-transport protocol, Skillware as an in-process capability framework—not an either/or choice.
 
 ---
 
-## 2. Skillware vs. Anthropic Skills
+## 2. Skillware vs. Agent Skills (SKILL.md)
 
-[Anthropic's Skills](https://github.com/anthropics/skills) repository provides reference tool implementations and prompts optimized specifically for Claude.
+The [Agent Skills](https://agentskills.io) standard (originally from [Anthropic](https://github.com/anthropics/skills), now a multi-host open format supported by Cursor, Copilot, Claude Code, Gemini CLI, and others) packages host-level agent guidance as `SKILL.md` files with optional `scripts/` including Python, loaded progressively by the host.
 
 ### Key Differences
-*   **Model Agnosticism**: Anthropic skills are hardcoded for Claude's specific tool-calling schemas. Skillware features **Universal Adapters**. You write a single `manifest.yaml`, and Skillware's `SkillLoader` translates it dynamically at runtime to fit Gemini, Claude, or OpenAI formats natively.
-*   **The "Managed" Runtime**: Anthropic provides standalone reference scripts. Skillware provides a comprehensive framework (`base_skill.py` and `loader.py`) that handles lifecycle, dynamic dependency checking, execution, and error handling automatically.
+*   **Model Agnosticism**: Agent Skills are host-dependent—execution is orchestrated by whichever client loads the SKILL.md (Claude Code, Cursor, etc.). Skillware features **Universal Adapters**: you write a single `manifest.yaml`, and `SkillLoader` translates it dynamically at runtime to fit Gemini, Claude, or OpenAI formats natively.
+*   **The "Managed" Runtime**: Both formats can bundle Python in a folder. The key difference is that Skillware enforces a **typed tool schema and a deterministic `skill.execute()` contract** via `SkillLoader`, rather than relying on host-orchestrated script runs alone. Skillware provides `base_skill.py` and `loader.py` for lifecycle, dependency checking, execution, and error handling automatically.
+
+Skillware is not adopting Agent Skills (SKILL.md) as its registry format.
 
 ---
 
 ## 3. Skillware vs. Antigravity ("Agentic" Skills)
 
-Frameworks like Google DeepMind's **Antigravity** use `SKILL.md` files to provide context to an autonomous coding agent working inside an IDE.
+Frameworks like Google DeepMind's **Antigravity** use `SKILL.md` files to provide context to an autonomous coding agent working inside an IDE. This is distinct from the open Agent Skills (SKILL.md) standard in §2: Antigravity targets IDE procedural memory, not host-agent skill packs.
 
 ### Key Differences
 *   **Target Audience**:
@@ -95,15 +99,15 @@ Frameworks like Google DeepMind's **Antigravity** use `SKILL.md` files to provid
 A critical architectural distinction is how Skillware treats logic execution versus "code generation."
 
 *   **The Code-Generation Approach**: Many platforms prompt the LLM to write code on the fly to solve a requested problem. This is expensive (you pay for output tokens every time), slow, and risky (the LLM executes unreviewed code).
-*   **The Skillware Approach**: Skillware relies on **Pre-Compiled Logic**. The logical system decides *which* tool to call (e.g., wallet_screening) and passes arguments. The heavy lifting happens deterministically in the Python `BaseSkill` implementation. This results in **zero-cost logic execution**, instant processing, and static, auditable code boundaries.
+*   **The Skillware Approach**: Skillware relies on **Pre-Compiled Logic**. The logical system decides *which* tool to call (e.g., wallet_screening) and passes arguments. The heavy lifting happens deterministically in the Python `BaseSkill` implementation. This results in **zero-cost logic execution**, instant processing, and static, auditable code boundaries. In contrast, hosts using Agent Skills load full SKILL.md instruction context into the model at runtime and may rely on the host to generate or run code; Skillware keeps reasoning in `instructions.md` but executes work in pre-reviewed `skill.execute()`.
 
 ---
 
 ## Executive Summary Matrix
 
-| Feature | Skillware | Model Context Protocol (MCP) | Anthropic Skills | Antigravity Skills | LangChain Tools | AutoGen & CrewAI | Semantic Kernel |
+| Feature | Skillware | Model Context Protocol (MCP) | Agent Skills (SKILL.md) | Antigravity Skills | LangChain Tools | AutoGen & CrewAI | Semantic Kernel |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Primary Goal** | **Installable App Capabilities** | **Standardized Tool Integration** | Claude Capabilities Showcase | **Developer Agent Guidance** | **Chain / Execution Wrappers** | **Multi-Agent Orchestration** | **Enterprise Orchestration** |
+| **Primary Goal** | **Installable App Capabilities** | **Standardized Tool Integration** | Host-agent skill packs (open standard) | **Developer Agent Guidance** | **Chain / Execution Wrappers** | **Multi-Agent Orchestration** | **Enterprise Orchestration** |
 | **Architecture** | **Native Python Library** | **Client-Server (JSON-RPC)** | Standalone Scripts | Markdown Context Files | Python/JS Components | Python Framework | Enterprise SDK |
-| **Model Compatibility** | **Universal** (Adapters built-in) | Standardized Protocol Clients | Claude Specific | Context injection | Broad via Ecosystem | Broad | Broad via Connectors |
+| **Model Compatibility** | **Universal** (Adapters built-in) | Standardized Protocol Clients | Host-dependent (multi-vendor clients) | Context injection | Broad via Ecosystem | Broad | Broad via Connectors |
 | **Execution Context** | **Runtime Application** | Distributed / Networked | Runtime Application | IDE / Build Environment | LangChain Pipeline | Agent Workflows | Enterprise Service |

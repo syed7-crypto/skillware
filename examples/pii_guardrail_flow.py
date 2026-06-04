@@ -22,17 +22,21 @@ def simulate_agentic_flow():
 
     # 2. Load the Privacy Firewall Skill
     print("[System] Loading compliance/pii_masker skill...")
-    pii_skill = SkillLoader.load_skill("compliance/pii_masker")["module"].PIIMaskerSkill()
+    pii_skill = SkillLoader.load_skill("compliance/pii_masker")[
+        "module"
+    ].PIIMaskerSkill()
 
     # 3. Intercept and Sanitize (Redact mode)
     print("[System] Intercepting prompt...")
     # NOTE: This requires Ollama running locally with the arpacorp/micro-f1-mask model.
     # If Ollama is not running, the skill falls back to returning the original string.
-    result = pii_skill.execute({
-        "text": raw_user_input,
-        "mode": "redact",  # Change to "mask" to see entity tags like [PERSON_1] instead of XXXX
-        "ollama_url": "http://localhost:11434"
-    })
+    result = pii_skill.execute(
+        {
+            "text": raw_user_input,
+            "mode": "redact",  # Change to "mask" to see entity tags like [PERSON_1] instead of XXXX
+            "ollama_url": "http://localhost:11434",
+        }
+    )
 
     scrubbed_input = result["sanitized_text"]
     metadata = result["metadata"]

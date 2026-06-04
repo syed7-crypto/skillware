@@ -43,7 +43,11 @@ class SkillLoader:
         raw = os.environ.get(SKILLWARE_SKILL_PATH_ENV, "").strip()
         if not raw:
             return []
-        return [Path(entry).expanduser().resolve() for entry in raw.split(os.pathsep) if entry.strip()]
+        return [
+            Path(entry).expanduser().resolve()
+            for entry in raw.split(os.pathsep)
+            if entry.strip()
+        ]
 
     @staticmethod
     def _cwd_skill_roots() -> List[Path]:

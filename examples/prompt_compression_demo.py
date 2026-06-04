@@ -5,7 +5,7 @@ def run_demo():
     print("Loading Prompt Token Rewriter...")
     # Load the skill via the global loader just like an LLM agent would
     skill_bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
-    skill_instance = skill_bundle['module'].PromptRewriter()
+    skill_instance = skill_bundle["module"].PromptRewriter()
 
     massive_prompt = (
         "Hello, could you please make sure to read this entirely? "
@@ -16,13 +16,14 @@ def run_demo():
     print(f"\n[RAW TEXT]: {massive_prompt}")
 
     # Execute the offline compression logic
-    result = skill_instance.execute({
-        "raw_text": massive_prompt,
-        "compression_aggression": "high"
-    })
+    result = skill_instance.execute(
+        {"raw_text": massive_prompt, "compression_aggression": "high"}
+    )
 
     print(f"\n[COMPRESSED TEXT]: {result['compressed_text']}")
-    print(f"[REDUCTION]: {result['original_tokens']} tokens -> {result['new_tokens']} tokens")
+    print(
+        f"[REDUCTION]: {result['original_tokens']} tokens -> {result['new_tokens']} tokens"
+    )
     print(f"[SAVED]: {result['tokens_saved']} tokens")
 
 

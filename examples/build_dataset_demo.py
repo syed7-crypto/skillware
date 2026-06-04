@@ -9,10 +9,8 @@ def main():
     load_env_file()
 
     print("Loading Synthetic Data Generator Skill...")
-    skill_bundle = SkillLoader.load_skill(
-        "data_engineering/synthetic_generator"
-    )
-    SyntheticGeneratorSkill = skill_bundle['module'].SyntheticGeneratorSkill
+    skill_bundle = SkillLoader.load_skill("data_engineering/synthetic_generator")
+    SyntheticGeneratorSkill = skill_bundle["module"].SyntheticGeneratorSkill
 
     generator = SyntheticGeneratorSkill()
 
@@ -27,21 +25,23 @@ def main():
         "scenarios like obscure comorbidities fighting with dual-insurance."
     )
 
-    result = generator.execute({
-        "domain": "medical_coding_disputes",
-        "num_samples": 10,
-        "entropy_temperature": 0.9,
-        "diversity_prompt": prompt,
-        "model_provider": "gemini",
-        "model_name": "gemini-2.5-flash-lite"
-    })
+    result = generator.execute(
+        {
+            "domain": "medical_coding_disputes",
+            "num_samples": 10,
+            "entropy_temperature": 0.9,
+            "diversity_prompt": prompt,
+            "model_provider": "gemini",
+            "model_name": "gemini-2.5-flash-lite",
+        }
+    )
 
     elapsed = time.time() - start_time
     print(f"Time Taken: {elapsed:.2f} seconds")
 
     if result.get("status") == "success":
-        score = result.get('entropy_score')
-        samples = result.get('samples', [])
+        score = result.get("entropy_score")
+        samples = result.get("samples", [])
         print(f"✅ Success! Entropy Score: {score}")
         print(f"Extracted {len(samples)} samples out of requested 10.")
         dataset.extend(samples)

@@ -18,6 +18,7 @@ class SyntheticGeneratorSkill(BaseSkill):
         manifest_path = os.path.join(os.path.dirname(__file__), "manifest.yaml")
         if os.path.exists(manifest_path):
             import yaml
+
             with open(manifest_path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f)
         return {}
@@ -35,16 +36,11 @@ class SyntheticGeneratorSkill(BaseSkill):
         # Scaled for readability
         return round(min(ratio * 1.5, 1.0), 3)
 
-    def _call_gemini(
-        self, prompt: str, temperature: float, model_name: str
-    ) -> str:
+    def _call_gemini(self, prompt: str, temperature: float, model_name: str) -> str:
         import google.genai as genai
         from google.genai import types
 
-        api_key = (
-            self.config.get("GOOGLE_API_KEY")
-            or os.environ.get("GOOGLE_API_KEY")
-        )
+        api_key = self.config.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=model_name,
@@ -53,31 +49,28 @@ class SyntheticGeneratorSkill(BaseSkill):
         )
         return response.text
 
-    def _call_anthropic(
-        self, prompt: str, temperature: float, model_name: str
-    ) -> str:
+    def _call_anthropic(self, prompt: str, temperature: float, model_name: str) -> str:
         import anthropic
-        api_key = (
-            self.config.get("ANTHROPIC_API_KEY")
-            or os.environ.get("ANTHROPIC_API_KEY")
+
+        api_key = self.config.get("ANTHROPIC_API_KEY") or os.environ.get(
+            "ANTHROPIC_API_KEY"
         )
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
             model=model_name,
             max_tokens=4096,
             temperature=temperature,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         return message.content[0].text
 
-    def _call_ollama(
-        self, prompt: str, temperature: float, model_name: str
-    ) -> str:
+    def _call_ollama(self, prompt: str, temperature: float, model_name: str) -> str:
         import ollama
+
         response = ollama.chat(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
-            options={"temperature": temperature}
+            options={"temperature": temperature},
         )
         return response.get("message", {}).get("content", "")
 
@@ -107,21 +100,15 @@ class SyntheticGeneratorSkill(BaseSkill):
 
         try:
             if provider == "gemini":
-                raw_text = self._call_gemini(
-                    system_prompt, temperature, model_name
-                )
+                raw_text = self._call_gemini(system_prompt, temperature, model_name)
             elif provider == "anthropic":
-                raw_text = self._call_anthropic(
-                    system_prompt, temperature, model_name
-                )
+                raw_text = self._call_anthropic(system_prompt, temperature, model_name)
             else:
-                raw_text = self._call_ollama(
-                    system_prompt, temperature, model_name
-                )
+                raw_text = self._call_ollama(system_prompt, temperature, model_name)
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"LLM Call Failed via {provider}: {str(e)}"
+                "message": f"LLM Call Failed via {provider}: {str(e)}",
             }
 
         samples = []
@@ -141,7 +128,7 @@ class SyntheticGeneratorSkill(BaseSkill):
             return {
                 "status": "error",
                 "message": f"Parsing failed: {e}",
-                "raw_output": raw_text
+                "raw_output": raw_text,
             }
 
         all_text = " ".join([str(s) for s in samples])
@@ -152,5 +139,5 @@ class SyntheticGeneratorSkill(BaseSkill):
             "entropy_score": score,
             "status": "success",
             "provider_used": provider,
-            "samples_generated": len(samples)
+            "samples_generated": len(samples),
         }

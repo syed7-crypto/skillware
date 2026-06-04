@@ -34,24 +34,24 @@ def _assert_real_issuer(issuer: dict, context: str) -> None:
     assert name, f"{context}: issuer.name is required"
     assert email, f"{context}: issuer.email is required"
 
-    assert name.lower() not in PLACEHOLDER_NAMES, (
-        f"{context}: issuer.name must not be a template placeholder"
-    )
-    assert email.lower() not in PLACEHOLDER_EMAILS, (
-        f"{context}: issuer.email must not be a template placeholder"
-    )
+    assert (
+        name.lower() not in PLACEHOLDER_NAMES
+    ), f"{context}: issuer.name must not be a template placeholder"
+    assert (
+        email.lower() not in PLACEHOLDER_EMAILS
+    ), f"{context}: issuer.email must not be a template placeholder"
 
     github = (issuer.get("github") or "").strip()
     if github:
-        assert github.lower() not in PLACEHOLDER_GITHUB, (
-            f"{context}: issuer.github must not be a template placeholder"
-        )
+        assert (
+            github.lower() not in PLACEHOLDER_GITHUB
+        ), f"{context}: issuer.github must not be a template placeholder"
 
     org = (issuer.get("org") or "").strip()
     if org:
-        assert org.lower() not in PLACEHOLDER_ORGS, (
-            f"{context}: issuer.org must not be a template placeholder"
-        )
+        assert (
+            org.lower() not in PLACEHOLDER_ORGS
+        ), f"{context}: issuer.org must not be a template placeholder"
 
 
 def test_registry_skills_declare_issuer():
@@ -66,11 +66,15 @@ def test_registry_skills_declare_issuer():
 
 def test_registry_skills_have_packaging_init_files():
     """Each registry skill must be importable under the skills package for pip wheels."""
-    assert (SKILLS_ROOT / "__init__.py").is_file(), "skills/__init__.py is required for packaging"
+    assert (
+        SKILLS_ROOT / "__init__.py"
+    ).is_file(), "skills/__init__.py is required for packaging"
 
     for skill_dir in _discover_skill_dirs():
         rel = skill_dir.relative_to(REPO_ROOT).as_posix()
-        assert (skill_dir / "__init__.py").is_file(), (
+        assert (
+            skill_dir / "__init__.py"
+        ).is_file(), (
             f"{rel}: add an empty __init__.py so non-Python assets ship in PyPI wheels"
         )
         category_dir = skill_dir.parent

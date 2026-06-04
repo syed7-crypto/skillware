@@ -69,3 +69,7 @@ include = ["skillware*", "skills*"]
 # and this wildcard. No per-skill entries needed when adding registry skills.
 [tool.setuptools.package-data]
 skills = ["**/*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]

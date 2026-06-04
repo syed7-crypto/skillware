@@ -105,7 +105,16 @@ def test_wheel_includes_skill_manifest(tmp_path):
     wheel_dir.mkdir()
 
     subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", str(REPO_ROOT), "--no-deps", "-w", str(wheel_dir)],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            str(REPO_ROOT),
+            "--no-deps",
+            "-w",
+            str(wheel_dir),
+        ],
         check=True,
         capture_output=True,
         text=True,
@@ -117,8 +126,12 @@ def test_wheel_includes_skill_manifest(tmp_path):
 
     with zipfile.ZipFile(wheel_path) as archive:
         names = archive.namelist()
-        assert any(n.endswith("skills/compliance/tos_evaluator/manifest.yaml") for n in names)
-        assert any(n.endswith("skills/office/pdf_form_filler/manifest.yaml") for n in names)
+        assert any(
+            n.endswith("skills/compliance/tos_evaluator/manifest.yaml") for n in names
+        )
+        assert any(
+            n.endswith("skills/office/pdf_form_filler/manifest.yaml") for n in names
+        )
 
 
 def test_to_ollama_prompt():
@@ -131,8 +144,8 @@ def test_to_ollama_prompt():
                 "properties": {
                     "arg1": {"type": "string", "description": "The first arg"}
                 },
-                "required": ["arg1"]
-            }
+                "required": ["arg1"],
+            },
         }
     }
 
@@ -148,10 +161,8 @@ def test_to_gemini_tool():
             "name": "test_gemini_skill",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "param1": {"type": "string"}
-                }
-            }
+                "properties": {"param1": {"type": "string"}},
+            },
         }
     }
     tool = SkillLoader.to_gemini_tool(dummy_bundle)
@@ -168,8 +179,8 @@ def test_to_claude_tool():
             "description": "desc",
             "parameters": {
                 "type": "object",
-                "properties": {"arg_claude": {"type": "string"}}
-            }
+                "properties": {"arg_claude": {"type": "string"}},
+            },
         }
     }
     tool = SkillLoader.to_claude_tool(dummy_bundle)
@@ -182,7 +193,9 @@ def test_sanitize_openai_tool_name():
         SkillLoader._sanitize_openai_tool_name("compliance/tos_evaluator")
         == "compliance_tos_evaluator"
     )
-    assert SkillLoader._sanitize_openai_tool_name("wallet_screening") == "wallet_screening"
+    assert (
+        SkillLoader._sanitize_openai_tool_name("wallet_screening") == "wallet_screening"
+    )
     assert SkillLoader._sanitize_openai_tool_name("") == "unknown_tool"
     assert SkillLoader._sanitize_openai_tool_name("a" * 80).startswith("a")
     assert len(SkillLoader._sanitize_openai_tool_name("a" * 80)) == 64
@@ -195,9 +208,7 @@ def test_to_openai_tool():
             "description": "Evaluate site policy.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "target_url": {"type": "string", "description": "URL"}
-                },
+                "properties": {"target_url": {"type": "string", "description": "URL"}},
                 "required": ["target_url"],
             },
         }
@@ -224,9 +235,7 @@ def test_to_deepseek_tool():
             "description": "Evaluate site policy.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "target_url": {"type": "string", "description": "URL"}
-                },
+                "properties": {"target_url": {"type": "string", "description": "URL"}},
                 "required": ["target_url"],
             },
         }

@@ -4,7 +4,7 @@ from skillware.core.loader import SkillLoader
 def test_synthetic_generator_manifest():
     bundle = SkillLoader.load_skill("data_engineering/synthetic_generator")
     assert bundle["manifest"]["name"] == "data_engineering/synthetic_generator"
-    assert "entropy_temperature" in bundle["manifest"]["parameters"]['properties']
+    assert "entropy_temperature" in bundle["manifest"]["parameters"]["properties"]
 
 
 def test_entropy_score():
@@ -28,21 +28,23 @@ def test_execute_success(mocker):
     bundle = SkillLoader.load_skill("data_engineering/synthetic_generator")
     skill = bundle["module"].SyntheticGeneratorSkill()
 
-    mock_json_response = '''```json
+    mock_json_response = """```json
 [
   {"instruction": "x", "input": "y", "output": "z"}
 ]
-```'''
+```"""
 
     # Mock the gemini call to avoid hitting realistic endpoints
-    mocker.patch.object(skill, '_call_gemini', return_value=mock_json_response)
+    mocker.patch.object(skill, "_call_gemini", return_value=mock_json_response)
 
-    result = skill.execute({
-        "domain": "test domain",
-        "num_samples": 1,
-        "diversity_prompt": "be diverse",
-        "model_provider": "gemini"
-    })
+    result = skill.execute(
+        {
+            "domain": "test domain",
+            "num_samples": 1,
+            "diversity_prompt": "be diverse",
+            "model_provider": "gemini",
+        }
+    )
 
     assert result["status"] == "success"
     assert result["provider_used"] == "gemini"

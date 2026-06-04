@@ -111,7 +111,9 @@ Follow the [Agent Code of Conduct](CODE_OF_CONDUCT.md): deterministic skill outp
 ### Tests and CI
 
 - Add or update tests when behavior changes.
-- Run `python -m flake8 .` and `pytest tests/` before opening a PR.
+- **GitHub Actions** installs `pip install -e ".[dev,all]"`, runs `python -m black --check .`, then `flake8 .`, then **`pytest tests/`** only. Do not add per-skill pip lines or test paths to `.github/workflows/ci.yml`.
+- Run `python -m black --check .`, `python -m flake8 .`, and `pytest tests/` locally before opening a PR (same scope as CI).
+- For skill work, also run `pytest skills/<category>/<skill_name>/test_skill.py` locally and install any packages from that skill's `manifest.yaml` `requirements`.
 - Wait for GitHub Actions CI to pass before requesting review.
 
 ### Pull request template
@@ -132,7 +134,7 @@ Agents must follow [Agent Contribution Workflow](docs/contributing/ai_native_wor
 4. **Verify locally**:
 
    ```bash
-   python -m black .
+   python -m black --check .
    python -m flake8 .
    pytest tests/
    ```

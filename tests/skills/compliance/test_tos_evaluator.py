@@ -74,7 +74,9 @@ def test_tos_evaluator_policy_clause_blocks_scraping(mock_get):
 
     def side_effect(url, **kwargs):
         if url.endswith("/robots.txt"):
-            return make_response(text="User-agent: *\nAllow: /\n", content_type="text/plain")
+            return make_response(
+                text="User-agent: *\nAllow: /\n", content_type="text/plain"
+            )
         return make_response(text=html)
 
     mock_get.side_effect = side_effect
@@ -106,7 +108,9 @@ def test_tos_evaluator_api_only_language_returns_caution(mock_get):
 
     def side_effect(url, **kwargs):
         if url.endswith("/robots.txt"):
-            return make_response(text="User-agent: *\nAllow: /\n", content_type="text/plain")
+            return make_response(
+                text="User-agent: *\nAllow: /\n", content_type="text/plain"
+            )
         return make_response(text=html)
 
     mock_get.side_effect = side_effect
@@ -137,7 +141,9 @@ def test_tos_evaluator_allowed_policy_can_return_safe(mock_get):
 
     def side_effect(url, **kwargs):
         if url.endswith("/robots.txt"):
-            return make_response(text="User-agent: *\nAllow: /\n", content_type="text/plain")
+            return make_response(
+                text="User-agent: *\nAllow: /\n", content_type="text/plain"
+            )
         return make_response(text=html)
 
     mock_get.side_effect = side_effect
@@ -168,7 +174,9 @@ def test_tos_evaluator_llm_fallback_is_mockable(mock_get):
 
     def side_effect(url, **kwargs):
         if url.endswith("/robots.txt"):
-            return make_response(text="User-agent: *\nAllow: /\n", content_type="text/plain")
+            return make_response(
+                text="User-agent: *\nAllow: /\n", content_type="text/plain"
+            )
         return make_response(text=html)
 
     mock_get.side_effect = side_effect

@@ -14,7 +14,11 @@ def load_and_initialize_skill(path):
     skill_class = None
     for attr_name in dir(bundle["module"]):
         attr = getattr(bundle["module"], attr_name)
-        if isinstance(attr, type) and issubclass(attr, BaseSkill) and attr is not BaseSkill:
+        if (
+            isinstance(attr, type)
+            and issubclass(attr, BaseSkill)
+            and attr is not BaseSkill
+        ):
             skill_class = attr
             break
     if not skill_class:
@@ -26,7 +30,7 @@ def load_and_initialize_skill(path):
 SKILL_PATHS = [
     "finance/wallet_screening",
     "office/pdf_form_filler",
-    "optimization/prompt_rewriter"
+    "optimization/prompt_rewriter",
 ]
 
 skills_registry = {}
@@ -63,7 +67,9 @@ Wait until you receive the SYSTEM RESPONSE containing the tool execution results
 Once you have the results, provide your final answer to the user.
 
 Here are the available skills and their instructions:
-""" + "\n---\n".join(tool_descriptions)
+""" + "\n---\n".join(
+    tool_descriptions
+)
 
 # 3. Setup Ollama Chat
 model_name = "llama3"
@@ -76,17 +82,14 @@ print(f"\nUser: {user_query}")
 
 messages = [
     {"role": "system", "content": combined_system_prompt},
-    {"role": "user", "content": user_query}
+    {"role": "user", "content": user_query},
 ]
 
 print(f"\n🤖 Calling Ollama model: {model_name}...")
 
 # 4. Handle Conversation & Tool Parsing Loop
 for _ in range(5):  # Max steps to prevent infinite loops
-    response = ollama.chat(
-        model=model_name,
-        messages=messages
-    )
+    response = ollama.chat(model=model_name, messages=messages)
 
     message_content = response.get("message", {}).get("content", "")
     print(f"\n[Model Output]:\n{message_content}")
@@ -115,26 +118,32 @@ for _ in range(5):  # Max steps to prevent infinite loops
                 print(f"📤 Result generated ({len(result_str)} bytes)")
 
                 # Send the result back to the model masquerading as a system/user update
-                messages.append({
-                    "role": "user",
-                    "content": (
-                        f"SYSTEM RESPONSE (Result from {fn_name}):\n"
-                        f"```json\n{result_str}\n```\n"
-                        "Please continue based on this result."
-                    )
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            f"SYSTEM RESPONSE (Result from {fn_name}):\n"
+                            f"```json\n{result_str}\n```\n"
+                            "Please continue based on this result."
+                        ),
+                    }
+                )
             else:
                 print(f"Unknown function requested: {fn_name}")
-                messages.append({
-                    "role": "user",
-                    "content": f"SYSTEM ERROR: Tool '{fn_name}' not found."
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"SYSTEM ERROR: Tool '{fn_name}' not found.",
+                    }
+                )
         except json.JSONDecodeError:
             print("Failed to decode JSON from tool call block.")
-            messages.append({
-                "role": "user",
-                "content": "SYSTEM ERROR: Invalid JSON format. Please output valid JSON."
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "SYSTEM ERROR: Invalid JSON format. Please output valid JSON.",
+                }
+            )
     else:
         # If no tool block was found, assume the agent is done and providing final answer
         print("\n💬 Final Answer reached. End of execution.")

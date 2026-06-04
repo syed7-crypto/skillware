@@ -213,7 +213,9 @@ class TOSEvaluatorSkill(BaseSkill):
         try:
             response = self.session.get(robots_url, timeout=10)
             if response.status_code >= 400:
-                assessment["reason"] = f"robots.txt returned HTTP {response.status_code}."
+                assessment["reason"] = (
+                    f"robots.txt returned HTTP {response.status_code}."
+                )
                 return assessment
 
             parser = RobotFileParser()
@@ -266,13 +268,20 @@ class TOSEvaluatorSkill(BaseSkill):
                 else:
                     candidates[item["url"]] = item
 
-        ordered = sorted(candidates.values(), key=lambda item: item["score"], reverse=True)
+        ordered = sorted(
+            candidates.values(), key=lambda item: item["score"], reverse=True
+        )
         return {"candidates": ordered[:max_terms_pages]}
 
-    def _extract_candidate_links(self, page_url: str, origin: str) -> List[Dict[str, Any]]:
+    def _extract_candidate_links(
+        self, page_url: str, origin: str
+    ) -> List[Dict[str, Any]]:
         links: List[Dict[str, Any]] = []
         response = self._safe_get(page_url, timeout=10)
-        if not response or "html" not in response.headers.get("Content-Type", "").lower():
+        if (
+            not response
+            or "html" not in response.headers.get("Content-Type", "").lower()
+        ):
             return links
 
         soup = BeautifulSoup(response.text[:300000], "html.parser")
@@ -449,7 +458,10 @@ class TOSEvaluatorSkill(BaseSkill):
             return False
         if robots_assessment.get("can_fetch") is False:
             return False
-        return bool(tos_assessment.get("matched_clauses") or tos_assessment["status"] == "caution")
+        return bool(
+            tos_assessment.get("matched_clauses")
+            or tos_assessment["status"] == "caution"
+        )
 
     def _run_llm_evaluator(
         self, normalized: Dict[str, Any], tos_assessment: Dict[str, Any]
@@ -512,26 +524,33 @@ class TOSEvaluatorSkill(BaseSkill):
         verdict = "INSUFFICIENT_EVIDENCE"
         confidence_score = 0.35
         reason = "Insufficient policy evidence to safely approve the requested action."
-        recommended_next_step = "Review the discovered policy pages manually before proceeding."
+        recommended_next_step = (
+            "Review the discovered policy pages manually before proceeding."
+        )
 
         if robots_assessment.get("can_fetch") is False:
             verdict = "UNSAFE"
             confidence_score = 0.98
             reason = robots_assessment["reason"]
-            recommended_next_step = (
-                "Do not automate access to this path unless you have explicit permission."
-            )
+            recommended_next_step = "Do not automate access to this path unless you have explicit permission."
         elif tos_assessment["status"] == "blocked":
             verdict = "UNSAFE"
             confidence_score = 0.9
             reason = tos_assessment["summary"]
-            recommended_next_step = "Avoid the requested action or obtain explicit written permission."
+            recommended_next_step = (
+                "Avoid the requested action or obtain explicit written permission."
+            )
         elif tos_assessment["status"] == "caution":
             verdict = "CAUTION"
             confidence_score = 0.65
             reason = tos_assessment["summary"]
-            recommended_next_step = "Prefer an official API or documented integration path if one exists."
-        elif tos_assessment["status"] == "allowed" and robots_assessment.get("can_fetch") is not False:
+            recommended_next_step = (
+                "Prefer an official API or documented integration path if one exists."
+            )
+        elif (
+            tos_assessment["status"] == "allowed"
+            and robots_assessment.get("can_fetch") is not False
+        ):
             verdict = "SAFE"
             confidence_score = 0.72
             reason = tos_assessment["summary"]
@@ -575,7 +594,9 @@ class TOSEvaluatorSkill(BaseSkill):
             "tos_assessment": tos_assessment,
             "llm_assessment": llm_assessment or {"status": "not_used"},
             "discovered_policy_urls": {
-                "candidates": [item["url"] for item in policy_candidates.get("candidates", [])]
+                "candidates": [
+                    item["url"] for item in policy_candidates.get("candidates", [])
+                ]
             },
             "evidence": evidence,
         }

@@ -3,7 +3,7 @@ from skillware.core.loader import SkillLoader
 
 def get_skill():
     bundle = SkillLoader.load_skill("optimization/prompt_rewriter")
-    return bundle['module'].PromptRewriter()
+    return bundle["module"].PromptRewriter()
 
 
 def test_manifest_schema():
@@ -17,7 +17,7 @@ def test_rewriter_execution_low():
     skill = get_skill()
     params = {
         "raw_text": "This   is a    very\n\n\nspaced out  prompt.",
-        "compression_aggression": "low"
+        "compression_aggression": "low",
     }
     result = skill.execute(params)
     assert result["compressed_text"] == "This is a very spaced out prompt."
@@ -28,7 +28,7 @@ def test_rewriter_execution_high():
     skill = get_skill()
     params = {
         "raw_text": "Please make sure to read this and analyze the data.",
-        "compression_aggression": "high"
+        "compression_aggression": "high",
     }
     result = skill.execute(params)
     assert "Please" not in result["compressed_text"]

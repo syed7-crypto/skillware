@@ -30,27 +30,44 @@ class PromptRewriter(BaseSkill):
         original_tokens = self._estimate_tokens(raw_text)
 
         # Level 1: Standardize Whitespace (Low Aggression)
-        compressed = re.sub(r'\s+', ' ', raw_text).strip()
+        compressed = re.sub(r"\s+", " ", raw_text).strip()
 
         # Level 2: Remove Filler Words (Medium Aggression)
         if aggression in ["medium", "high"]:
             fillers = [
-                "please", "could you", "would you", "kindly", "make sure to",
-                "ensure that", "I want you to", "can you"
+                "please",
+                "could you",
+                "would you",
+                "kindly",
+                "make sure to",
+                "ensure that",
+                "I want you to",
+                "can you",
             ]
             for filler in fillers:
-                compressed = re.compile(re.escape(filler), re.IGNORECASE).sub("", compressed)
-            compressed = re.sub(r'\s+', ' ', compressed).strip()
+                compressed = re.compile(re.escape(filler), re.IGNORECASE).sub(
+                    "", compressed
+                )
+            compressed = re.sub(r"\s+", " ", compressed).strip()
 
         # Level 3: Intense Vowel/Punctuation Dropping (High Aggression)
         if aggression == "high":
             # Remove non-essential punctuation
-            compressed = re.sub(r'[^\w\s\.\-]', '', compressed)
+            compressed = re.sub(r"[^\w\s\.\-]", "", compressed)
             # Remove common extremely high frequency stop words naively
-            stop_words = [" a ", " an ", " the ", " is ", " that ", " this ", " and ", " to "]
+            stop_words = [
+                " a ",
+                " an ",
+                " the ",
+                " is ",
+                " that ",
+                " this ",
+                " and ",
+                " to ",
+            ]
             for word in stop_words:
                 compressed = re.compile(word, re.IGNORECASE).sub(" ", compressed)
-            compressed = re.sub(r'\s+', ' ', compressed).strip()
+            compressed = re.sub(r"\s+", " ", compressed).strip()
 
         new_tokens = self._estimate_tokens(compressed)
 
@@ -58,5 +75,5 @@ class PromptRewriter(BaseSkill):
             "compressed_text": compressed,
             "original_tokens": original_tokens,
             "new_tokens": new_tokens,
-            "tokens_saved": original_tokens - new_tokens
+            "tokens_saved": original_tokens - new_tokens,
         }

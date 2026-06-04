@@ -8,6 +8,9 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 
 ## [Unreleased]
 
+### Added
+- **`defi/evm_tx_handler`** (#142): Structured EVM agent wallet skill on Ethereum and Base — `resolve`, Uni V2 `quote`/`preview`/`execute` (approve + swap), `transfer`, `balances`, `wallet_info`, YAML registries, optional CoinGecko USD preview, `max_trade_usd` fail-closed cap, balance pre-flight checks, and mocked Web3 tests. Examples: `examples/gemini_evm_tx_handler.py`, `examples/claude_evm_tx_handler.py`.
+
 ## [0.3.3] - 2026-05-29
 
 ### Added

@@ -3,8 +3,9 @@
   "description": "Quote and transfer from a dedicated agent wallet on Ethereum and Base.",
   "issuer": {
     "name": "Hendobox",
-    "email": "50964581+Hendobox@users.noreply.github.com",
-    "github": "Hendobox"
+    "email": "henryonyebuchi53@gmail.com",
+    "github": "Hendobox",
+    "org": "ARPAHLS"
   },
   "icon": "wallet",
   "color": "emerald",

@@ -7,8 +7,9 @@ short_description: "EVM agent wallet — quote, swap, and transfer from structur
 category: defi
 issuer:
   name: Hendobox
-  email: 50964581+Hendobox@users.noreply.github.com
+  email: henryonyebuchi53@gmail.com
   github: Hendobox
+  org: ARPAHLS
 parameters:
   type: object
   properties:

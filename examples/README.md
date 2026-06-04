@@ -29,6 +29,8 @@ with editable install: `pip install -e ".[gemini]"`.
 | `gemini_pdf_form_filler.py` | `office/pdf_form_filler` | Gemini | `[gemini]`, `[office]` | `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY` | Uses Gemini as the agent while the PDF skill calls Anthropic for form filling. |
 | `gemini_tos_evaluator.py` | `compliance/tos_evaluator` | Gemini | `[gemini]` | `GOOGLE_API_KEY` | Runs the terms-of-service evaluator with a Gemini function-calling loop. |
 | `gemini_wallet_check.py` | `finance/wallet_screening` | Gemini | `[gemini]` | `GOOGLE_API_KEY`, `ETHERSCAN_API_KEY` | Screens an Ethereum wallet with Gemini orchestration and Etherscan data. |
+| `gemini_evm_tx_handler.py` | `defi/evm_tx_handler` | Gemini | `[gemini]` | `GOOGLE_API_KEY`; for live swaps also `AGENT_WALLET_PRIVATE_KEY`, `BASE_RPC_URL` or `ETHEREUM_RPC_URL`. Set `EVM_TX_HANDLER_EXAMPLE_DEMO=1` for mocked flow without keys. | Resolve → quote → preview → execute buy flow via Gemini tool loop (or demo mode). |
+| `claude_evm_tx_handler.py` | `defi/evm_tx_handler` | Claude | `[claude]` | `ANTHROPIC_API_KEY`; for live swaps also `AGENT_WALLET_PRIVATE_KEY`, RPC URLs. Demo: `EVM_TX_HANDLER_EXAMPLE_DEMO=1`. | Claude tool loop for structured DeFi intent and optional execute after confirmation. |
 | `mica_claude_flow.py` | `compliance/mica_module` | Claude | `[claude]` | `ANTHROPIC_API_KEY` | Runs a MiCA compliance agent loop through Claude. |
 | `mica_ollama_flow.py` | `compliance/mica_module` | Ollama | No Skillware extra; install `ollama` separately | None | Runs a local Ollama MiCA flow with prompt-mode tool calling. |
 | `mica_rag_flow.py` | `compliance/mica_module` | Gemini | `[gemini]` | `GOOGLE_API_KEY` | Runs the MiCA RAG flow with Gemini. |

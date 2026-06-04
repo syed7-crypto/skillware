@@ -17,10 +17,11 @@ from .skill import EvmTxHandlerSkill  # noqa: E402
 TEST_KEY = "0x" + "11" * 32
 
 
-def _mock_w3_for_erc20_swap(*, allowance: int = 0):
+def _mock_w3_for_erc20_swap(*, allowance: int = 0, token_balance: int = 10**18):
     w3 = MagicMock()
     w3.eth.gas_price = 10**9
     w3.eth.get_transaction_count.return_value = 0
+    w3.eth.get_balance = MagicMock(return_value=10**20)
     w3.to_wei.side_effect = lambda val, unit: int(val * 10**9) if unit == "gwei" else val
 
     router = MagicMock()
@@ -34,7 +35,19 @@ def _mock_w3_for_erc20_swap(*, allowance: int = 0):
     }
 
     erc20 = MagicMock()
-    erc20.functions.allowance.return_value.call.return_value = allowance
+
+    def _allowance(_owner, _spender):
+        fn = MagicMock()
+        fn.call.return_value = allowance
+        return fn
+
+    def _balance_of(_addr):
+        fn = MagicMock()
+        fn.call.return_value = token_balance
+        return fn
+
+    erc20.functions.allowance.side_effect = _allowance
+    erc20.functions.balanceOf.side_effect = _balance_of
     erc20.functions.approve.return_value.build_transaction.return_value = {
         "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "gas": 60000,
@@ -165,10 +178,11 @@ def test_execute_needs_confirmation_when_enabled(skill):
     assert result["status"] == "needs_confirmation"
 
 
+@patch.object(EvmTxHandlerSkill, "_usd_for_token_amount", return_value=10.0)
 @patch.object(EvmTxHandlerSkill, "_wait_receipt")
 @patch.object(EvmTxHandlerSkill, "_sign_and_send")
 @patch.object(EvmTxHandlerSkill, "_get_web3")
-def test_execute_buy_with_approve(mock_web3, mock_send, mock_receipt, skill):
+def test_execute_buy_with_approve(mock_web3, mock_send, mock_receipt, _mock_usd, skill):
     mock_web3.return_value = _mock_w3_for_erc20_swap(allowance=0)
     mock_send.side_effect = ["0xapprovehash", "0xswaphash"]
     mock_receipt.return_value = {"block_number": 1, "gas_used": 250000, "success": True}
@@ -194,11 +208,12 @@ def test_execute_buy_with_approve(mock_web3, mock_send, mock_receipt, skill):
     assert "quote" in result
 
 
+@patch.object(EvmTxHandlerSkill, "_usd_for_token_amount", return_value=10.0)
 @patch.object(EvmTxHandlerSkill, "_wait_receipt")
 @patch.object(EvmTxHandlerSkill, "_sign_and_send")
 @patch.object(EvmTxHandlerSkill, "_get_web3")
 def test_execute_buy_skips_approve_when_allowance_sufficient(
-    mock_web3, mock_send, mock_receipt, skill
+    mock_web3, mock_send, mock_receipt, _mock_usd, skill
 ):
     mock_web3.return_value = _mock_w3_for_erc20_swap(allowance=10**30)
     mock_send.return_value = "0xswaphash"
@@ -226,6 +241,7 @@ def test_execute_buy_skips_approve_when_allowance_sufficient(
 @patch.object(EvmTxHandlerSkill, "_get_web3")
 @patch.object(EvmTxHandlerSkill, "_usd_for_token_amount", return_value=1000.0)
 def test_max_trade_usd_blocks_quote(mock_usd, mock_web3, skill):
+    original_cap = skill.user_config.get("max_trade_usd")
     skill.user_config["max_trade_usd"] = 500
     mock_web3.return_value = _mock_w3_for_erc20_swap()
 
@@ -244,11 +260,16 @@ def test_max_trade_usd_blocks_quote(mock_usd, mock_web3, skill):
     )
     assert result["status"] == "error"
     assert "max_trade_usd" in result["message"]
+    if original_cap is None:
+        skill.user_config.pop("max_trade_usd", None)
+    else:
+        skill.user_config["max_trade_usd"] = original_cap
 
 
 @patch.object(EvmTxHandlerSkill, "_get_web3")
 @patch.object(EvmTxHandlerSkill, "_usd_for_token_amount", return_value=None)
 def test_max_trade_usd_fail_closed_without_price(mock_usd, mock_web3, skill):
+    original_cap = skill.user_config.get("max_trade_usd")
     skill.user_config["max_trade_usd"] = 500
     mock_web3.return_value = _mock_w3_for_erc20_swap()
 
@@ -267,6 +288,10 @@ def test_max_trade_usd_fail_closed_without_price(mock_usd, mock_web3, skill):
     )
     assert result["status"] == "error"
     assert "USD price" in result["message"]
+    if original_cap is None:
+        skill.user_config.pop("max_trade_usd", None)
+    else:
+        skill.user_config["max_trade_usd"] = original_cap
 
 
 def test_missing_rpc_fail_closed(skill, monkeypatch):
@@ -338,11 +363,19 @@ def test_transfer_resolves_addressbook(mock_web3, mock_send, mock_receipt, skill
     mock_receipt.return_value = {"block_number": 1, "gas_used": 21000, "success": True}
 
     contract = MagicMock()
+
+    def _balance_of(_addr):
+        fn = MagicMock()
+        fn.call.return_value = 10**18
+        return fn
+
+    contract.functions.balanceOf.side_effect = _balance_of
     contract.functions.transfer.return_value.build_transaction.return_value = {
         "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "gas": 100000,
     }
     w3.eth.contract.return_value = contract
+    w3.eth.get_balance = MagicMock(return_value=10**18)
 
     result = skill.execute(
         {
@@ -405,6 +438,64 @@ def test_update_preferences(skill, tmp_path):
         skill.user_config = skill._load_user_config()
 
 
+def test_missing_wallet_key_structured(skill, monkeypatch):
+    monkeypatch.delenv("AGENT_WALLET_PRIVATE_KEY", raising=False)
+    result = skill.execute({"action": "wallet_info", "intent": {}})
+    assert result["status"] == "missing_config"
+    assert "AGENT_WALLET_PRIVATE_KEY" in result["setup"]["env_var"]
+    assert "docs/skills/evm_tx_handler.md" in result["setup"]["docs"]
+
+
+@patch.object(EvmTxHandlerSkill, "_get_web3")
+def test_transfer_insufficient_balance(mock_web3, skill):
+    w3 = MagicMock()
+    w3.eth.gas_price = 10**9
+    w3.to_wei.side_effect = lambda val, unit: int(val * 10**9) if unit == "gwei" else val
+    mock_web3.return_value = w3
+    erc20 = MagicMock()
+    erc20.functions.balanceOf.side_effect = lambda _a: MagicMock(
+        call=MagicMock(return_value=1)
+    )
+    w3.eth.contract.return_value = erc20
+    w3.eth.get_balance = MagicMock(return_value=10**18)
+
+    result = skill.execute(
+        {
+            "action": "transfer",
+            "confirmed": True,
+            "intent": {
+                "chain": "base",
+                "target_asset": "usdc",
+                "amount": 10,
+                "recipient": "mom",
+            },
+        }
+    )
+    assert result["status"] == "insufficient_balance"
+    assert "agent_hint" in result
+
+
+@patch.object(EvmTxHandlerSkill, "_get_web3")
+def test_preview_includes_drift_warning(mock_web3, skill):
+    mock_web3.return_value = _mock_w3_for_erc20_swap()
+    result = skill.execute(
+        {
+            "action": "quote",
+            "intent": {
+                "side": "buy",
+                "chain": "base",
+                "target_asset": "degen",
+                "spend_asset": "usdc",
+                "amount": 10,
+                "amount_kind": "target_out",
+            },
+        }
+    )
+    warnings = " ".join(result["preview"]["warnings"])
+    assert "re-quotes" in warnings
+    assert "immediately before" in warnings
+
+
 def test_wallet_info_no_secrets(skill):
     result = skill.execute({"action": "wallet_info", "intent": {}})
     assert result["status"] == "ready"
@@ -421,7 +512,9 @@ def test_balances(mock_web3, skill):
     w3.eth.get_balance.return_value = 10**18
     mock_web3.return_value = w3
     erc20 = MagicMock()
-    erc20.functions.balanceOf.return_value.call.return_value = 5_000_000
+    erc20.functions.balanceOf.side_effect = lambda _a: MagicMock(
+        call=MagicMock(return_value=5_000_000)
+    )
     w3.eth.contract.return_value = erc20
 
     result = skill.execute({"action": "balances", "intent": {"chain": "ethereum"}})

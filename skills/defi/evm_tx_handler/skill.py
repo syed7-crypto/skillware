@@ -49,6 +49,13 @@ _GAS_MULTIPLIERS = {
     "high": (1.25, 2.5),
     "aggressive": (1.5, 3.0),
 }
+_GAS_BUFFER_UNITS = 350_000
+_PREVIEW_DRIFT_WARNING = (
+    "execute re-quotes on-chain at broadcast time; preview amounts may drift."
+)
+_QUOTE_BEFORE_EXECUTE_WARNING = (
+    "Call quote (or preview) immediately before user confirmation and execute."
+)
 
 
 class EvmTxHandlerSkill(BaseSkill):
@@ -194,20 +201,111 @@ class EvmTxHandlerSkill(BaseSkill):
     def _private_key_env(self) -> str:
         return str(self.user_config.get("private_key_env") or "AGENT_WALLET_PRIVATE_KEY")
 
-    def _account(self):
+    def _wallet_key_configured(self) -> bool:
         env_name = self._private_key_env()
         key = os.environ.get(env_name) or (self.config or {}).get(env_name)
-        if not key:
-            raise ValueError(
-                f"Missing dedicated agent wallet key: set {env_name} in .env "
-                "(never pass private keys in tool arguments)."
-            )
+        return bool(key and str(key).strip())
+
+    def _missing_wallet_key_response(self) -> Dict[str, Any]:
+        env_name = self._private_key_env()
+        return {
+            "status": "missing_config",
+            "message": f"Dedicated agent wallet key is not configured ({env_name}).",
+            "agent_hint": (
+                "Create or fund a disposable agent-only wallet, add its private key to "
+                f"{env_name} in a local .env file, then retry. Never use a personal, "
+                "treasury, or exchange hot wallet."
+            ),
+            "setup": {
+                "env_var": env_name,
+                "where": "Project-root .env (loaded via skillware.core.env.load_env_file)",
+                "never": "Do not pass private keys in tool arguments, YAML, or chat.",
+                "wallet_policy": (
+                    "Use a dedicated agent wallet with limited funds for automated trades only."
+                ),
+                "docs": "docs/skills/evm_tx_handler.md#environment",
+                "api_keys_guide": "docs/usage/api_keys.md",
+            },
+        }
+
+    def _require_wallet_key(self) -> Optional[Dict[str, Any]]:
+        if self._wallet_key_configured():
+            return None
+        return self._missing_wallet_key_response()
+
+    def _account(self):
+        missing = self._require_wallet_key()
+        if missing:
+            raise ValueError(missing["message"])
+        env_name = self._private_key_env()
+        key = os.environ.get(env_name) or (self.config or {}).get(env_name)
         if key.startswith("0x"):
             key = key[2:]
         return Account.from_key(key)
 
     def _wallet_address(self) -> str:
         return self._account().address
+
+    def _estimate_gas_buffer_wei(self, w3: Web3, policy: str) -> int:
+        max_fee, _priority = self._eip1559_fees(w3, policy)
+        return max_fee * _GAS_BUFFER_UNITS
+
+    def _token_balance_wei(
+        self, w3: Web3, chain: str, token: Dict[str, Any], address: str
+    ) -> int:
+        if token.get("native"):
+            return w3.eth.get_balance(address)
+        contract = w3.eth.contract(address=token["address"], abi=ERC20_ABI)
+        return contract.functions.balanceOf(address).call()
+
+    def _preflight_spend_balance(
+        self,
+        w3: Web3,
+        chain: str,
+        token: Dict[str, Any],
+        amount_wei: int,
+        address: str,
+        policy: str,
+        *,
+        needs_gas: bool,
+    ) -> Optional[Dict[str, Any]]:
+        balance = self._token_balance_wei(w3, chain, token, address)
+        if balance < amount_wei:
+            return {
+                "status": "insufficient_balance",
+                "message": (
+                    f"Insufficient {token['symbol']} balance for this operation."
+                ),
+                "agent_hint": (
+                    f"Wallet holds {self._from_wei(balance, token['decimals'])} "
+                    f"{token['symbol']} but needs at least "
+                    f"{self._from_wei(amount_wei, token['decimals'])}."
+                ),
+                "balance": {
+                    "asset": token["symbol"],
+                    "available": self._from_wei(balance, token["decimals"]),
+                    "required": self._from_wei(amount_wei, token["decimals"]),
+                },
+            }
+
+        if needs_gas and not token.get("native"):
+            gas_buffer = self._estimate_gas_buffer_wei(w3, policy)
+            native_bal = w3.eth.get_balance(address)
+            if native_bal < gas_buffer:
+                return {
+                    "status": "insufficient_balance",
+                    "message": "Insufficient native ETH for gas.",
+                    "agent_hint": (
+                        "ERC20 swaps and transfers also require ETH on the chain for gas. "
+                        "Top up the agent wallet with a small ETH balance and retry."
+                    ),
+                    "balance": {
+                        "asset": "eth",
+                        "available": self._from_wei(native_bal, 18),
+                        "required_gas_buffer_eth": self._from_wei(gas_buffer, 18),
+                    },
+                }
+        return None
 
     # --- Intent merge / resolve ---
 
@@ -505,7 +603,11 @@ class EvmTxHandlerSkill(BaseSkill):
             "rate": rate,
             "gas_estimate": quote["gas_estimate"],
             "router": "uniswap_v2",
-            "warnings": ["Rates are indicative; slippage may apply."],
+            "warnings": [
+                "Rates are indicative; slippage may apply.",
+                _PREVIEW_DRIFT_WARNING,
+                _QUOTE_BEFORE_EXECUTE_WARNING,
+            ],
         }
         usd = self._preview_usd(quote)
         if usd is not None:
@@ -617,7 +719,16 @@ class EvmTxHandlerSkill(BaseSkill):
     def _action_execute(self, intent: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         need_confirm = self._require_confirmed(params)
         if need_confirm:
+            need_confirm["agent_hint"] = (
+                "Show the latest quote/preview to the user, obtain explicit approval, "
+                "then call execute with confirmed: true. ERC20 swaps may require an "
+                "on-chain approve transaction before the swap when allowance is low."
+            )
             return need_confirm
+
+        missing_key = self._require_wallet_key()
+        if missing_key:
+            return missing_key
 
         resolved = self._merge_intent(intent)
         if resolved.get("side") not in ("buy", "sell"):
@@ -635,9 +746,38 @@ class EvmTxHandlerSkill(BaseSkill):
         router_address = Web3.to_checksum_address(self.chains[chain]["router_v2"])
         policy = resolved.get("gas_policy", "normal")
         amount_in = int(quote["amount_in_wei"])
+        token_in = quote["token_in"]
+
+        balance_issue = self._preflight_spend_balance(
+            w3,
+            chain,
+            token_in,
+            amount_in,
+            account.address,
+            policy,
+            needs_gas=True,
+        )
+        if balance_issue:
+            return balance_issue
+        if token_in.get("native"):
+            gas_buffer = self._estimate_gas_buffer_wei(w3, policy)
+            native_bal = self._token_balance_wei(w3, chain, token_in, account.address)
+            if native_bal < amount_in + gas_buffer:
+                return {
+                    "status": "insufficient_balance",
+                    "message": "Insufficient native ETH for swap amount and gas.",
+                    "agent_hint": (
+                        "The agent wallet needs enough ETH to cover the swap input and "
+                        "estimated gas. Re-quote after topping up ETH."
+                    ),
+                    "balance": {
+                        "asset": "eth",
+                        "available": self._from_wei(native_bal, 18),
+                        "required": self._from_wei(amount_in + gas_buffer, 18),
+                    },
+                }
 
         approve_tx_hash: Optional[str] = None
-        token_in = quote["token_in"]
         if not token_in.get("native"):
             approve_tx_hash = self._approve_router_if_needed(
                 w3,
@@ -669,6 +809,16 @@ class EvmTxHandlerSkill(BaseSkill):
         if approve_tx_hash:
             result["approve_tx_hash"] = approve_tx_hash
             result["approve_explorer_url"] = self._explorer_url(chain, approve_tx_hash)
+            result["agent_hint"] = (
+                "Two-step ERC20 swap: approve transaction confirmed; swap broadcast "
+                "follows in this response. When confirm_before_send is enabled, each "
+                "step should be shown to the user before signing."
+            )
+        else:
+            result["agent_hint"] = (
+                "Swap broadcast uses a fresh on-chain quote at execute time; amounts "
+                "may differ slightly from the last preview."
+            )
         return result
 
     # --- Transfer ---
@@ -722,7 +872,15 @@ class EvmTxHandlerSkill(BaseSkill):
     def _action_transfer(self, intent: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
         need_confirm = self._require_confirmed(params)
         if need_confirm:
+            need_confirm["agent_hint"] = (
+                "Confirm recipient, asset, amount, and chain with the user before "
+                "calling transfer with confirmed: true."
+            )
             return need_confirm
+
+        missing_key = self._require_wallet_key()
+        if missing_key:
+            return missing_key
 
         resolved = self._merge_intent({**intent, "side": "send"})
         chain = resolved["chain"]
@@ -740,6 +898,32 @@ class EvmTxHandlerSkill(BaseSkill):
         policy = resolved.get("gas_policy", "normal")
 
         account = self._account()
+        balance_issue = self._preflight_spend_balance(
+            w3,
+            chain,
+            token,
+            amount_wei,
+            account.address,
+            policy,
+            needs_gas=not token.get("native"),
+        )
+        if balance_issue:
+            return balance_issue
+        if token.get("native"):
+            gas_buffer = self._estimate_gas_buffer_wei(w3, policy)
+            native_bal = w3.eth.get_balance(account.address)
+            if native_bal < amount_wei + gas_buffer:
+                return {
+                    "status": "insufficient_balance",
+                    "message": "Insufficient native ETH for transfer amount and gas.",
+                    "agent_hint": "Top up the agent wallet with ETH on this chain and retry.",
+                    "balance": {
+                        "asset": "eth",
+                        "available": self._from_wei(native_bal, 18),
+                        "required": self._from_wei(amount_wei + gas_buffer, 18),
+                    },
+                }
+
         chain_id = int(self.chains[chain]["chain_id"])
         max_fee, priority = self._eip1559_fees(w3, policy)
         base_tx: Dict[str, Any] = {
@@ -774,6 +958,10 @@ class EvmTxHandlerSkill(BaseSkill):
     # --- Read-only ---
 
     def _action_balances(self, intent: Dict[str, Any], _params: Dict[str, Any]) -> Dict[str, Any]:
+        missing_key = self._require_wallet_key()
+        if missing_key:
+            return missing_key
+
         chain = self._chain_key(intent.get("chain"))
         w3 = self._get_web3(chain)
         address = self._wallet_address()
@@ -795,10 +983,11 @@ class EvmTxHandlerSkill(BaseSkill):
         return {"status": "ready", "chain": chain, "address": address, "balances": balances}
 
     def _action_wallet_info(self, _intent: Dict[str, Any], _params: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            address = self._wallet_address()
-        except ValueError as exc:
-            return {"status": "error", "message": str(exc)}
+        missing_key = self._require_wallet_key()
+        if missing_key:
+            return missing_key
+
+        address = self._wallet_address()
 
         prefs = {
             k: self.user_config[k]

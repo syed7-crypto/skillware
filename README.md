@@ -55,7 +55,7 @@ documentation. Runnable provider scripts are indexed in
 ```text
 Skillware/
 ├── docs/                       # Introduction, testing, skill catalog, usage guides (docs/usage/)
-├── examples/                   # Provider reference scripts (Gemini, Claude, OpenAI, Ollama, ...)
+├── examples/                   # Provider reference scripts — usage demos, not pytest (see examples/README.md)
 ├── skills/                     # Skill Registry
 │   └── category/               # Domain boundaries (e.g., finance)
 │       └── skill_name/         # The Skill bundle
@@ -63,7 +63,7 @@ Skillware/
 │           ├── skill.py        # Executable Python logic
 │           ├── instructions.md # Cognitive map for the LLM
 │           ├── card.json       # Optional UI presentation metadata
-│           └── test_skill.py   # Unit tests and schema validation
+│           └── test_skill.py   # Bundle test (required for new skills; see docs/TESTING.md)
 ├── skillware/                  # Core Framework Package
 │   ├── cli.py                  # Command-line interface
 │   └── core/
@@ -72,7 +72,9 @@ Skillware/
 │       └── loader.py           # Universal Skill Loader and Model Adapter
 ├── templates/                  # Boilerplate templates for new skills
 │   └── python_skill/           # Standard template with required files
-└── tests/                      # Automated test suite
+└── tests/                      # Clone-repo tests (framework + optional maintainer skill tests)
+    ├── test_*.py               # Framework tests (loader, CLI, issuer, …)
+    └── skills/                 # Optional maintainer skill tests (edge cases)
 ```
 
 ## Quick Start

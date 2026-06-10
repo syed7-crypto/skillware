@@ -51,7 +51,7 @@ git remote add upstream https://github.com/ARPAHLS/skillware.git
 git fetch upstream
 git checkout main
 git pull upstream main
-pip install -e .[dev]
+pip install -e ".[dev,all]"
 git checkout -b feat/issue-<number>-short-description
 ```
 
@@ -160,7 +160,7 @@ Run a **pre-PR audit** on yourself:
 1. Map every acceptance criterion in the issue to a file or test in your diff.
 2. Complete the [verification checklist](#verification-checklists-by-contribution-type) for your contribution type.
 3. If the change is user-visible, confirm [CHANGELOG.md](../../CHANGELOG.md) has entries under `[Unreleased]` (same rule as [CONTRIBUTING.md](../../CONTRIBUTING.md)).
-4. Run `flake8` and `pytest`; report actual command output to your operator—do not claim success without evidence.
+4. Run `flake8` and `pytest tests/`; for skill work also run the relevant `pytest skills/.../test_skill.py`. Report actual command output to your operator—do not claim success without evidence.
 5. Draft PR template answers: check only boxes that apply; fill the skill section only if `skills/` changed.
 
 If anything fails, return to Stage 4, fix, and audit again.
@@ -260,7 +260,7 @@ Complete the checklist that matches your issue during Stage 5.
 - [ ] `skill.py`: deterministic, JSON-serializable returns, safe error handling
 - [ ] `instructions.md`: when to use, how to interpret output, limitations
 - [ ] `card.json`: `issuer` matches manifest
-- [ ] `test_skill.py` passes
+- [ ] `test_skill.py` (bundle test) passes — `pytest skills/<category>/<skill_name>/test_skill.py`
 - [ ] `docs/skills/<skill_name>.md` and catalog row in `docs/skills/README.md`
 - [ ] **Usage Examples** on the catalog page (all five providers per [skill usage template](../usage/skill_usage_template.md)); link to `docs/usage/` and list skill `env_vars` without duplicating [api_keys.md](../usage/api_keys.md)
 - [ ] `pytest tests/test_skill_issuer.py` passes

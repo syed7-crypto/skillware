@@ -8,6 +8,9 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 
 ## [Unreleased]
 
+### Changed
+- **Documentation**: [TESTING.md](docs/TESTING.md), [CONTRIBUTING.md](CONTRIBUTING.md), [ai_native_workflow.md](docs/contributing/ai_native_workflow.md), and README architecture tree document the bundle / framework / maintainer / example testing model. Pytest collects `tests/` and `skills/` only (`examples/` ignored).
+
 ## [0.3.5] - 2026-06-05
 
 ### Added

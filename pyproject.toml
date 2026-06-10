@@ -70,6 +70,10 @@ include = ["skillware*", "skills*"]
 [tool.setuptools.package-data]
 skills = ["**/*"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests", "skills"]
+addopts = "--ignore=examples"
+
 [tool.black]
 line-length = 88
 target-version = ["py310"]

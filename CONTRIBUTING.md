@@ -28,7 +28,7 @@ Pick the path that matches your issue. Only the **skill** row requires the full 
 
 | Type | What you change | Typical issue label | Before coding | Verify locally |
 | :--- | :--- | :--- | :--- | :--- |
-| **New or updated skill** | `skills/<category>/<name>/`, `docs/skills/`, templates | Skill proposal, enhancement | Skill proposal or approved issue | `pytest` for skill + `tests/test_skill_issuer.py` |
+| **New or updated skill** | `skills/<category>/<name>/`, `docs/skills/`, templates | Skill proposal, enhancement | Skill proposal or approved issue | Bundle test + `pytest tests/test_skill_issuer.py` (see [TESTING.md](docs/TESTING.md)) |
 | **Documentation** | `docs/`, `README.md`, `CONTRIBUTING.md` | Documentation, good first issue | Doc issue or typo/fix issue | Links valid; tone consistent |
 | **Core framework** | `skillware/core/`, `tests/` | Framework feature | Framework feature issue | `pytest tests/`; update usage docs if API changes |
 | **Bug fix** | Paths named in issue | Bug report | Reproduction or failing test | Targeted test + full `pytest tests/` when touching shared code |
@@ -76,10 +76,10 @@ git checkout -b feat/issue-<number>-short-description
 ### 4. Install dependencies
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev,all]"
 ```
 
-See [TESTING.md](docs/TESTING.md) for formatting, linting, and pytest usage.
+See [TESTING.md](docs/TESTING.md) for the bundle / framework / maintainer / example model and pytest usage.
 
 ### 5. Implement and verify
 
@@ -110,10 +110,27 @@ Follow the [Agent Code of Conduct](CODE_OF_CONDUCT.md): deterministic skill outp
 
 ### Tests and CI
 
-- Add or update tests when behavior changes.
-- **GitHub Actions** installs `pip install -e ".[dev,all]"`, runs `python -m black --check .`, then `flake8 .`, then **`pytest tests/`** only. Do not add per-skill pip lines or test paths to `.github/workflows/ci.yml`.
-- Run `python -m black --check .`, `python -m flake8 .`, and `pytest tests/` locally before opening a PR (same scope as CI).
-- For skill work, also run `pytest skills/<category>/<skill_name>/test_skill.py` locally and install any packages from that skill's `manifest.yaml` `requirements`.
+- Add or update tests in the correct layer when behavior changes (see [TESTING.md](docs/TESTING.md)).
+- **Skill bundle test** — `skills/<category>/<name>/test_skill.py` (required for new skills; ships in the wheel; run locally before skill PRs).
+- **Framework test** — `tests/test_*.py` at repo root (loader, CLI, issuer rules).
+- **Maintainer skill test** — optional `tests/skills/<category>/test_<name>.py` for extra loader or edge-case coverage.
+- **Usage examples** — `examples/*.py` are not tests and are not run in CI.
+- **GitHub Actions** installs `pip install -e ".[dev,all]"`, runs `python -m black --check .`, then `flake8 .`, then **`pytest tests/`** (framework + maintainer tests). Do not add per-skill pip lines or test paths to `.github/workflows/ci.yml`.
+- Run locally before opening a PR:
+
+  ```bash
+  python -m black --check .
+  python -m flake8 .
+  python -m pytest tests/
+  ```
+
+  For skill work, also run:
+
+  ```bash
+  python -m pytest skills/<category>/<skill_name>/test_skill.py
+  ```
+
+  Install packages from that skill's `manifest.yaml` `requirements` when they are not covered by `[all]`.
 - Wait for GitHub Actions CI to pass before requesting review.
 
 ### Pull request template
@@ -231,10 +248,13 @@ The primary guide for the host LLM.
 - Describes UI presentation (`name`, `description`, `icon`, `ui_schema`, and similar).
 - When present, include an `issuer` object that matches `manifest.yaml` (`name` and `email` at minimum; copy `github` and `org` when used).
 
-### 5. `test_skill.py` (validation)
+### 5. `test_skill.py` (bundle test)
 
-- Unit tests for schema compliance and deterministic execution paths.
+- **Required** for every new registry skill (template: `templates/python_skill/test_skill.py`).
+- Unit tests for schema compliance and deterministic execution paths (offline; mock externals).
+- Ships inside the skill bundle via `pip install skillware`.
 - Run: `pytest skills/<category>/<skill_name>/test_skill.py`
+- Optional extra depth for maintainers: `tests/skills/<category>/test_<skill_name>.py` — see [TESTING.md](docs/TESTING.md).
 
 ### Packaging (PyPI and `pip install`)
 

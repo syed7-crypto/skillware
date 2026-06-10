@@ -1,5 +1,7 @@
 # Skillware Examples Index
 
+> **These are usage examples, not tests.** Runnable provider demos live here; automated tests live in `skills/**/test_skill.py` (bundle) and `tests/` (framework and optional maintainer depth). See [TESTING.md](../docs/TESTING.md).
+
 Runnable examples in this directory show how to load Skillware skills, adapt
 them for a provider, execute local skill logic, and return tool results to an
 agent loop. Provider setup details live in the usage guides:

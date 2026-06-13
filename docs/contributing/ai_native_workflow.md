@@ -132,6 +132,7 @@ You must:
 ```bash
 python -m black .
 python -m flake8 .
+pytest skills/
 pytest tests/
 ```
 
@@ -160,7 +161,7 @@ Run a **pre-PR audit** on yourself:
 1. Map every acceptance criterion in the issue to a file or test in your diff.
 2. Complete the [verification checklist](#verification-checklists-by-contribution-type) for your contribution type.
 3. If the change is user-visible, confirm [CHANGELOG.md](../../CHANGELOG.md) has entries under `[Unreleased]` (same rule as [CONTRIBUTING.md](../../CONTRIBUTING.md)).
-4. Run `flake8` and `pytest tests/`; for skill work also run the relevant `pytest skills/.../test_skill.py`. Report actual command output to your operator—do not claim success without evidence.
+4. Run `flake8`, `pytest skills/`, and `pytest tests/`; for skill work also run the relevant `pytest skills/.../test_skill.py`. Report actual command output to your operator—do not claim success without evidence.
 5. Draft PR template answers: check only boxes that apply; fill the skill section only if `skills/` changed.
 
 If anything fails, return to Stage 4, fix, and audit again.
@@ -200,7 +201,7 @@ You should:
 
 1. Draft the PR description (why, not only what; link the issue).
 2. Map changed files to the [pull request template](../../.github/PULL_REQUEST_TEMPLATE.md)—skill checklist only when `skills/` changed.
-3. Monitor CI (lint and `pytest tests/`). If checks fail, diagnose, fix in Stage 4, and push to the same branch.
+3. Monitor CI (lint, `pytest skills/`, and `pytest tests/`). If checks fail, diagnose, fix in Stage 4, and push to the same branch.
 4. Address review comments with focused follow-up commits.
 
 Do not force-push shared branches unless a maintainer instructs you.

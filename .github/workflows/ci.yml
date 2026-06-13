@@ -36,9 +36,14 @@ jobs:
         # strict check against our config
         flake8 . --count --statistics
 
-    - name: Test with pytest
+    - name: Skill bundle tests
       env:
         ANTHROPIC_API_KEY: "dummy_key_for_ci"
         ETHERSCAN_API_KEY: "dummy_key_for_ci"
-      run: |
-        pytest tests/
+      run: pytest skills/
+
+    - name: Framework and maintainer tests
+      env:
+        ANTHROPIC_API_KEY: "dummy_key_for_ci"
+        ETHERSCAN_API_KEY: "dummy_key_for_ci"
+      run: pytest tests/

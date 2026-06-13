@@ -111,20 +111,21 @@ Follow the [Agent Code of Conduct](CODE_OF_CONDUCT.md): deterministic skill outp
 ### Tests and CI
 
 - Add or update tests in the correct layer when behavior changes (see [TESTING.md](docs/TESTING.md)).
-- **Skill bundle test** — `skills/<category>/<name>/test_skill.py` (required for new skills; ships in the wheel; run locally before skill PRs).
+- **Skill bundle test** — `skills/<category>/<name>/test_skill.py` (required for new skills; ships in the wheel; runs in CI via `pytest skills/`).
 - **Framework test** — `tests/test_*.py` at repo root (loader, CLI, issuer rules).
 - **Maintainer skill test** — optional `tests/skills/<category>/test_<name>.py` for extra loader or edge-case coverage.
 - **Usage examples** — `examples/*.py` are not tests and are not run in CI.
-- **GitHub Actions** installs `pip install -e ".[dev,all]"`, runs `python -m black --check .`, then `flake8 .`, then **`pytest tests/`** (framework + maintainer tests). Do not add per-skill pip lines or test paths to `.github/workflows/ci.yml`.
+- **GitHub Actions** installs `pip install -e ".[dev,all]"`, runs `python -m black --check .`, then `flake8 .`, then **`pytest skills/`** (bundle tests), then **`pytest tests/`** (framework + maintainer tests). Do not add per-skill pip lines or hardcoded skill paths to `.github/workflows/ci.yml`.
 - Run locally before opening a PR:
 
   ```bash
   python -m black --check .
   python -m flake8 .
+  python -m pytest skills/
   python -m pytest tests/
   ```
 
-  For skill work, also run:
+  For a single skill:
 
   ```bash
   python -m pytest skills/<category>/<skill_name>/test_skill.py
@@ -153,6 +154,7 @@ Agents must follow [Agent Contribution Workflow](docs/contributing/ai_native_wor
    ```bash
    python -m black --check .
    python -m flake8 .
+   pytest skills/
    pytest tests/
    ```
 

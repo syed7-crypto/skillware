@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 | Layer | Location | Shipped in pip wheel? | CI on PR? |
 | :--- | :--- | :---: | :---: |
-| **Skill bundle test** | `skills/<category>/<skill_name>/test_skill.py` | Yes | No — run locally for skill PRs |
+| **Skill bundle test** | `skills/<category>/<skill_name>/test_skill.py` | Yes | Yes |
 | **Framework test** | `tests/test_*.py` (not under `tests/skills/`) | No (clone only) | Yes |
 | **Maintainer skill test** | `tests/skills/<category>/test_<name>.py` | No (clone only) | Yes when present |
 | **Usage example** | `examples/*.py` | No | No — not pytest |
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 | Loader, CLI, registry issuer rules | Framework test | `tests/test_loader.py`, `tests/test_skill_issuer.py` |
 | End-to-end provider demo script | Usage example | `examples/gemini_tos_evaluator.py` |
 
-**Rule of thumb:** if it ships with the skill and must pass before merge → **bundle test** (run locally). If it is extra regression depth for clone-repo work → **maintainer test** (optional). If it proves provider integration → **example**, not pytest.
+**Rule of thumb:** if it ships with the skill and must pass before merge → **bundle test** (CI + local). If it is extra regression depth for clone-repo work → **maintainer test** (optional). If it proves provider integration → **example**, not pytest.
 
 ## 1. Code Formatting (Black)
 
@@ -121,20 +121,21 @@ GitHub Actions installs `pip install -e ".[dev,all]"`, then runs:
 ```bash
 python -m black --check .
 python -m flake8 .
+python -m pytest skills/
 python -m pytest tests/
 ```
 
-That covers **framework tests** and **maintainer skill tests** under `tests/`. It does not run `examples/` or skill bundle tests. Do not add per-skill pip lines or test paths to `.github/workflows/ci.yml`.
+That covers **skill bundle tests** under `skills/` and **framework + maintainer tests** under `tests/`. It does not run `examples/`. Do not add per-skill pip lines or hardcoded skill paths to `.github/workflows/ci.yml`.
 
 The `[all]` extra includes optional SDK groups plus registry skill runtime deps (`web3`, `fastembed`, `numpy`, …) so `pytest skills/` works after `pip install -e ".[dev,all]"`. When a skill adds new `manifest.yaml` `requirements`, add the same packages to the matching optional extra and to `[all]` in `pyproject.toml`.
 
 ### Local commands
 
-Match CI, and run bundle tests when you touch skills:
+Match CI:
 
 ```bash
-python -m pytest tests/
 python -m pytest skills/
+python -m pytest tests/
 ```
 
 Single skill bundle test:
@@ -164,5 +165,6 @@ Before pushing your code, run the following commands:
 1. `skillware list` (verify install and path resolution)
 2. `python -m black --check .` (verify formatting; use `python -m black .` to fix)
 3. `python -m flake8 .` (check quality)
-4. `python -m pytest tests/` (framework + maintainer tests — same scope as CI)
-5. `python -m pytest skills/<category>/<skill_name>/test_skill.py` when your PR adds or changes a skill bundle test (or `pytest skills/` for broad skill changes)
+4. `python -m pytest skills/` (bundle tests — same scope as CI)
+5. `python -m pytest tests/` (framework + maintainer tests — same scope as CI)
+6. `python -m pytest skills/<category>/<skill_name>/test_skill.py` when you want a single-skill subset

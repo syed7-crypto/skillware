@@ -19,9 +19,10 @@ def manifest():
         return yaml.safe_load(f)
 
 
-def test_manifest_schema(manifest):
-    assert manifest["name"] == "wallet_screening"
-    assert "address" in manifest["parameters"]["properties"]
+def test_skill_manifest_consistency(skill, manifest):
+    skill_manifest = skill.manifest
+    assert skill_manifest["name"] == manifest["name"]
+    assert skill_manifest["version"] == manifest["version"]
 
 
 def test_invalid_address(skill):

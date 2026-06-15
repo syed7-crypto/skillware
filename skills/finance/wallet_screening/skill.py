@@ -3,6 +3,7 @@ import os
 import re
 import requests
 import glob
+import yaml
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from skillware.core.base_skill import BaseSkill
@@ -44,6 +45,10 @@ class WalletScreeningSkill(BaseSkill):
 
     @property
     def manifest(self) -> Dict[str, Any]:
+        manifest_path = os.path.join(os.path.dirname(__file__), "manifest.yaml")
+        if os.path.exists(manifest_path):
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f)
         return {}
 
     def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:

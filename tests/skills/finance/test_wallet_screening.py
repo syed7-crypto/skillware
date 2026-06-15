@@ -1,4 +1,5 @@
 from unittest.mock import patch, MagicMock
+
 from skillware.core.loader import SkillLoader
 
 
@@ -6,6 +7,15 @@ def get_skill():
     bundle = SkillLoader.load_skill("finance/wallet_screening")
     # Initialize without needing real API keys
     return bundle["module"].WalletScreeningSkill()
+
+
+def test_wallet_screening_manifest():
+    bundle = SkillLoader.load_skill("finance/wallet_screening")
+    skill = bundle["module"].WalletScreeningSkill()
+    manifest = bundle["manifest"]
+    assert skill.manifest["name"] == manifest["name"]
+    assert skill.manifest["version"] == manifest["version"]
+    assert skill.manifest["issuer"] == manifest["issuer"]
 
 
 @patch("skills.finance.wallet_screening.skill.requests.get")

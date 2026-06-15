@@ -14,6 +14,7 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 
 ### Fixed
 - **`novelty_extractor`**: Bundle tests mock fastembed embeddings so CI avoids HuggingFace downloads and rate limits (#159 follow-up).
+- **`finance/wallet_screening`**: `WalletScreeningSkill.manifest` loads `manifest.yaml` from the bundle directory (#165).
 
 ### Changed
 - **CI**: GitHub Actions runs `pytest skills/` then `pytest tests/` after lint (bundle + framework/maintainer tests; closes #90) (#159).

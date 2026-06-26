@@ -5,7 +5,9 @@ import sys
 import yaml
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
+
+import requests
 
 from rich.table import Table
 from rich.console import Console
@@ -29,6 +31,13 @@ _EXAMPLES_README_REL = Path("examples") / "README.md"
 _PARENT_WALK_LIMIT = 6
 _SKILL_ID_PATTERN = re.compile(r"`([\w-]+/[\w-]+)`")
 _EXAMPLES_GITHUB_BLOB_BASE = "https://github.com/ARPAHLS/skillware/blob/main/examples"
+_EXAMPLES_README_GITHUB_URL = (
+    "https://github.com/ARPAHLS/skillware/blob/main/examples/README.md"
+)
+_EXAMPLES_README_RAW_URL = (
+    "https://raw.githubusercontent.com/ARPAHLS/skillware/main/examples/README.md"
+)
+_EXAMPLES_INDEX_SOURCE = Union[Path, str]
 
 
 def _flatten_table_cell(text: str, max_len: int = 80) -> str:
@@ -39,10 +48,12 @@ def _flatten_table_cell(text: str, max_len: int = 80) -> str:
     return cleaned
 
 
-def _examples_readme_display_path(readme_path: Path) -> str:
-    """Prefer a short relative path in CLI output."""
+def _examples_readme_display_path(source: _EXAMPLES_INDEX_SOURCE) -> str:
+    """Prefer a short relative path in CLI output; GitHub URL when loaded remotely."""
+    if isinstance(source, str):
+        return source
     try:
-        return readme_path.relative_to(Path.cwd()).as_posix()
+        return source.relative_to(Path.cwd()).as_posix()
     except ValueError:
         return "examples/README.md"
 
@@ -53,7 +64,7 @@ def _example_github_url(script: str) -> str:
 
 
 def _examples_readme_path() -> Optional[Path]:
-    """Resolve examples/README.md for editable checkout or bundled install."""
+    """Resolve a local examples/README.md from checkout or cwd walk."""
     candidates: List[Path] = []
 
     package_root = Path(__file__).resolve().parent.parent
@@ -75,9 +86,18 @@ def _examples_readme_path() -> Optional[Path]:
     return None
 
 
-def _parse_examples_index(readme_path: Path) -> List[Dict[str, Any]]:
-    """Parse the Runnable Scripts table from examples/README.md."""
-    text = readme_path.read_text(encoding="utf-8")
+def _fetch_examples_readme_from_github() -> Optional[str]:
+    """Download examples/README.md from the canonical repo on GitHub."""
+    try:
+        response = requests.get(_EXAMPLES_README_RAW_URL, timeout=10)
+        response.raise_for_status()
+        return response.text
+    except (requests.RequestException, OSError):
+        return None
+
+
+def _parse_examples_index_text(text: str) -> List[Dict[str, Any]]:
+    """Parse the Runnable Scripts table from examples/README.md content."""
     section_start = text.find("## Runnable Scripts")
     if section_start == -1:
         return []
@@ -112,6 +132,11 @@ def _parse_examples_index(readme_path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
+def _parse_examples_index(readme_path: Path) -> List[Dict[str, Any]]:
+    """Parse the Runnable Scripts table from a local examples/README.md file."""
+    return _parse_examples_index_text(readme_path.read_text(encoding="utf-8"))
+
+
 def _example_counts_by_skill(rows: List[Dict[str, Any]]) -> Dict[str, int]:
     """Map skill ID to indexed script count (multi-skill rows count toward each ID)."""
     counts: Dict[str, int] = defaultdict(int)
@@ -121,11 +146,16 @@ def _example_counts_by_skill(rows: List[Dict[str, Any]]) -> Dict[str, int]:
     return dict(counts)
 
 
-def _load_examples_index() -> Tuple[List[Dict[str, Any]], Optional[Path]]:
+def _load_examples_index() -> Tuple[List[Dict[str, Any]], Optional[_EXAMPLES_INDEX_SOURCE]]:
     readme_path = _examples_readme_path()
-    if readme_path is None:
-        return [], None
-    return _parse_examples_index(readme_path), readme_path
+    if readme_path is not None:
+        return _parse_examples_index_text(readme_path.read_text(encoding="utf-8")), readme_path
+
+    text = _fetch_examples_readme_from_github()
+    if text is not None:
+        return _parse_examples_index_text(text), _EXAMPLES_README_GITHUB_URL
+
+    return [], None
 
 
 def _get_skill_roots(skills_root_override: Optional[Path] = None) -> List[Path]:
@@ -323,10 +353,11 @@ def cmd_list(
 
     example_counts: Dict[str, int] = {}
     if show_examples:
-        rows, readme_path = _load_examples_index()
-        if readme_path is None:
+        rows, readme_source = _load_examples_index()
+        if readme_source is None:
             console.print(
-                "examples/README.md not found; cannot show example counts.",
+                "examples/README.md not found locally or on GitHub; "
+                "cannot show example counts.",
                 style="bold #FF9AA2",
             )
         else:
@@ -373,9 +404,12 @@ def cmd_examples(
     if console is None:
         console = Console()
 
-    rows, readme_path = _load_examples_index()
-    if readme_path is None:
-        console.print("examples/README.md not found.", style="bold #FF9AA2")
+    rows, readme_source = _load_examples_index()
+    if readme_source is None:
+        console.print(
+            "Could not load examples/README.md from the repo or GitHub.",
+            style="bold #FF9AA2",
+        )
         return 1
 
     if skill_id:
@@ -391,7 +425,7 @@ def cmd_examples(
         if not rows:
             console.print(
                 f"No indexed examples for '{skill_id}'. "
-                f"See {_examples_readme_display_path(readme_path)} for the full inventory.",
+                f"See {_examples_readme_display_path(readme_source)} for the full inventory.",
                 style="bold #FF9AA2",
             )
             return 1
@@ -423,7 +457,7 @@ def cmd_examples(
 
     console.print(table)
     console.print(
-        f"Full notes: {_examples_readme_display_path(readme_path)}",
+        f"Full notes: {_examples_readme_display_path(readme_source)}",
         style="dim",
     )
     return 0

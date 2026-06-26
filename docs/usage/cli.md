@@ -124,7 +124,7 @@ Sample output:
 
 ### skillware examples
 
-List runnable scripts indexed in `examples/README.md` (source of truth — the CLI does not scan `examples/*.py` directly).
+List runnable scripts indexed in `examples/README.md` (source of truth — the CLI does not scan `examples/*.py` directly). When no local `examples/README.md` is found (typical for `pip install`), the CLI loads the index from GitHub `main`.
 
     skillware examples
     skillware examples compliance/tos_evaluator

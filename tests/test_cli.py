@@ -2,6 +2,7 @@ from skillware.cli import (
     _discover_skills,
     _resolve_pytest_targets,
     _parse_examples_index,
+    _load_examples_index,
     _example_counts_by_skill,
     _example_github_url,
     cmd_list,
@@ -581,6 +582,46 @@ def test_cmd_examples_includes_github_links(examples_readme):
 def test_cmd_examples_unknown_skill_returns_nonzero(examples_readme):
     rc = cmd_examples(skill_id="compliance/missing")
     assert rc == 1
+
+
+def test_load_examples_index_prefers_local_readme(examples_readme):
+    rows, source = _load_examples_index()
+    assert len(rows) == 2
+    assert source == examples_readme
+
+
+def test_load_examples_index_github_fallback(monkeypatch):
+    monkeypatch.setattr("skillware.cli._examples_readme_path", lambda: None)
+
+    class FakeResponse:
+        text = SAMPLE_EXAMPLES_README
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(
+        "skillware.cli.requests.get",
+        lambda url, timeout: FakeResponse(),
+    )
+
+    rows, source = _load_examples_index()
+    assert len(rows) == 2
+    assert source == (
+        "https://github.com/ARPAHLS/skillware/blob/main/examples/README.md"
+    )
+
+
+def test_load_examples_index_github_failure(monkeypatch):
+    monkeypatch.setattr("skillware.cli._examples_readme_path", lambda: None)
+
+    def raise_error(url, timeout):
+        raise OSError("offline")
+
+    monkeypatch.setattr("skillware.cli.requests.get", raise_error)
+
+    rows, source = _load_examples_index()
+    assert rows == []
+    assert source is None
 
 
 def test_main_examples_subcommand_exits_with_cmd_examples_code(monkeypatch):

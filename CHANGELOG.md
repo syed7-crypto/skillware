@@ -18,7 +18,7 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 ### Added
 
 - **CLI**: `skillware test` runs bundle tests via pytest — all roots, by skill ID, or by `--category`; supports `-v` and `--no-header`. Documented in [cli.md](docs/usage/cli.md), [TESTING.md](docs/TESTING.md), and contributor guides (#83).
-- **CLI**: `skillware list --examples` shows per-skill example script counts; `skillware examples [skill_id]` lists indexed runnable scripts from `examples/README.md` (#126).
+- **CLI**: `skillware list --examples` shows per-skill example script counts; `skillware examples [skill_id]` lists indexed runnable scripts from `examples/README.md` (#126). Ships `examples/README.md` in the wheel so pip installs can resolve the index.
 
 ## [0.3.7] - 2026-06-22
 

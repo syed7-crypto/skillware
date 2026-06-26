@@ -30,6 +30,22 @@ _PARENT_WALK_LIMIT = 6
 _SKILL_ID_PATTERN = re.compile(r"`([\w-]+/[\w-]+)`")
 
 
+def _flatten_table_cell(text: str, max_len: int = 80) -> str:
+    """Strip markdown backticks and truncate for compact terminal tables."""
+    cleaned = " ".join(text.replace("`", "").split())
+    if len(cleaned) > max_len:
+        return cleaned[: max_len - 1] + "…"
+    return cleaned
+
+
+def _examples_readme_display_path(readme_path: Path) -> str:
+    """Prefer a short relative path in CLI output."""
+    try:
+        return readme_path.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return "examples/README.md"
+
+
 def _examples_readme_path() -> Optional[Path]:
     """Resolve examples/README.md for editable checkout or bundled install."""
     candidates: List[Path] = []
@@ -369,7 +385,7 @@ def cmd_examples(
         if not rows:
             console.print(
                 f"No indexed examples for '{skill_id}'. "
-                f"See {readme_path} for the full inventory.",
+                f"See {_examples_readme_display_path(readme_path)} for the full inventory.",
                 style="bold #FF9AA2",
             )
             return 1
@@ -394,14 +410,14 @@ def cmd_examples(
         table.add_row(
             row["script"],
             ", ".join(row["skill_ids"]),
-            row["provider"],
-            row["extra"],
-            row["env_vars"],
+            _flatten_table_cell(row["provider"], max_len=40),
+            _flatten_table_cell(row["extra"], max_len=40),
+            _flatten_table_cell(row["env_vars"], max_len=72),
         )
 
     console.print(table)
     console.print(
-        f"Full notes: {readme_path}",
+        f"Full notes: {_examples_readme_display_path(readme_path)}",
         style="dim",
     )
     return 0

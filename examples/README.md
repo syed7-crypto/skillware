@@ -4,7 +4,9 @@
 
 Runnable examples in this directory show how to load Skillware skills, adapt
 them for a provider, execute local skill logic, and return tool results to an
-agent loop. Provider setup details live in the usage guides:
+agent loop. From the repository root, run `skillware examples` or
+`skillware list --examples` to browse the index in the terminal (see
+[CLI reference](../docs/usage/cli.md)). Provider setup details live in the usage guides:
 
 - [API keys for skills](../docs/usage/api_keys.md)
 - [Gemini](../docs/usage/gemini.md)

@@ -516,6 +516,7 @@ def test_cmd_examples_lists_all_scripts(examples_readme):
     assert "gemini_tos_evaluator.py" in output
     assert "ollama_skills_test.py" in output
     assert "Full notes:" in output
+    assert "examples/README.md" in output
 
 
 def test_cmd_examples_filters_by_skill_id(examples_readme):

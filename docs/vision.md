@@ -106,7 +106,7 @@ Honest snapshot for **v0** (current v0.3.x line):
 
 - **Registry**: Skills under `skills/` with docs in [docs/skills/](skills/README.md).
 - **Loader**: Dynamic import, dependency checks, and adapters for major LLM tool formats.
-- **CLI**: `skillware list`, `skillware test`, and an interactive menu, included with `pip install skillware`.
+- **CLI**: `skillware list`, `skillware test`, and an interactive menu, included with `pip install skillware`. Use `skillware list --examples` and `skillware examples` to browse the runnable script index from the terminal.
 - **Active work**: Wallet screening enhancements ([RFC #115](https://github.com/ARPAHLS/skillware/issues/115)), CLI polish, contributor docs, and good first issues across docs and framework.
 
 Browse [open good first issues](https://github.com/ARPAHLS/skillware/issues?q=is%3Aopen+label%3A%22good+first+issue%22) if you want a low-risk entry point.

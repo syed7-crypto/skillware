@@ -21,7 +21,7 @@ To list locally available skills or run bundle tests from the terminal, see the 
 | OpenAI (ChatGPT) | `to_openai_tool()` | [openai.md](openai.md) | `OPENAI_API_KEY` |
 | DeepSeek | `to_deepseek_tool()` | [deepseek.md](deepseek.md) | `DEEPSEEK_API_KEY` |
 | Ollama (prompt mode) | `to_ollama_prompt()` | [ollama.md](ollama.md) | (local; no cloud key) |
-| CLI | `skillware list`, `skillware test` | [cli.md](cli.md) | pytest in `[dev]` for `test` |
+| CLI | `skillware list`, `skillware test`, `skillware examples` | [cli.md](cli.md) | pytest in `[dev]` for `test` |
 
 Skill-specific **Usage Examples** (sample prompts and execute payloads) live on each [skill catalog page](../skills/README.md).
 

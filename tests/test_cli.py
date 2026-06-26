@@ -1,7 +1,10 @@
 from skillware.cli import (
     _discover_skills,
     _resolve_pytest_targets,
+    _parse_examples_index,
+    _example_counts_by_skill,
     cmd_list,
+    cmd_examples,
     cmd_interactive,
     cmd_test,
     _short_description,
@@ -247,6 +250,7 @@ def test_cmd_help_includes_list_examples(capsys):
     assert "--category" in output
     assert "--issuer" in output
     assert "skillware test" in output
+    assert "skillware examples" in output
 
 
 def test_interactive_help_dispatches_to_cmd_help(monkeypatch):
@@ -439,3 +443,112 @@ def test_interactive_test_dispatch(tmp_path, monkeypatch):
     cmd_interactive(console=Console(file=buf, force_terminal=False))
 
     assert captured.get("called") is True
+
+
+SAMPLE_EXAMPLES_README = """# Examples
+
+## Runnable Scripts
+
+| Script | Skill ID | Provider | Required extra | Required env vars | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `gemini_tos_evaluator.py` | `compliance/tos_evaluator` | Gemini | `[gemini]` | `GOOGLE_API_KEY` | Demo. |
+| `ollama_skills_test.py` | `finance/wallet_screening`, `office/pdf_form_filler` | Ollama | `[office]` | None | Multi. |
+"""
+
+
+@pytest.fixture
+def examples_readme(tmp_path, monkeypatch):
+    readme = tmp_path / "examples" / "README.md"
+    readme.parent.mkdir(parents=True)
+    readme.write_text(SAMPLE_EXAMPLES_README, encoding="utf-8")
+    monkeypatch.setattr("skillware.cli._examples_readme_path", lambda: readme)
+    return readme
+
+
+def test_parse_examples_index_handles_multi_skill_ids(examples_readme):
+    rows = _parse_examples_index(examples_readme)
+    assert len(rows) == 2
+    assert rows[1]["skill_ids"] == [
+        "finance/wallet_screening",
+        "office/pdf_form_filler",
+    ]
+
+
+def test_example_counts_by_skill_includes_multi_skill_rows(examples_readme):
+    rows = _parse_examples_index(examples_readme)
+    counts = _example_counts_by_skill(rows)
+    assert counts["compliance/tos_evaluator"] == 1
+    assert counts["finance/wallet_screening"] == 1
+    assert counts["office/pdf_form_filler"] == 1
+
+
+def test_cmd_list_examples_column(tmp_path, examples_readme):
+    import io
+    from rich.console import Console
+
+    _make_bundle(tmp_path, "compliance", "tos_evaluator")
+    _make_bundle(tmp_path, "finance", "wallet_screening")
+    _make_bundle(tmp_path, "office", "pdf_form_filler")
+    _make_bundle(tmp_path, "data_engineering", "novelty_extractor")
+
+    buf = io.StringIO()
+    console = Console(file=buf, force_terminal=False, width=200)
+    cmd_list(
+        skills_root_override=tmp_path,
+        show_examples=True,
+        console=console,
+    )
+
+    output = buf.getvalue()
+    assert "EXAMPLES" in output
+    assert "compliance" in output
+    assert "finance" in output
+
+
+def test_cmd_examples_lists_all_scripts(examples_readme):
+    import io
+    from rich.console import Console
+
+    buf = io.StringIO()
+    rc = cmd_examples(console=Console(file=buf, force_terminal=False, width=200))
+    assert rc == 0
+    output = buf.getvalue()
+    assert "gemini_tos_evaluator.py" in output
+    assert "ollama_skills_test.py" in output
+    assert "Full notes:" in output
+
+
+def test_cmd_examples_filters_by_skill_id(examples_readme):
+    import io
+    from rich.console import Console
+
+    buf = io.StringIO()
+    rc = cmd_examples(
+        skill_id="compliance/tos_evaluator",
+        console=Console(file=buf, force_terminal=False, width=200),
+    )
+    assert rc == 0
+    output = buf.getvalue()
+    assert "gemini_tos_evaluator.py" in output
+    assert "ollama_skills_test.py" not in output
+
+
+def test_cmd_examples_unknown_skill_returns_nonzero(examples_readme):
+    rc = cmd_examples(skill_id="compliance/missing")
+    assert rc == 1
+
+
+def test_main_examples_subcommand_exits_with_cmd_examples_code(monkeypatch):
+    import sys
+    from skillware.cli import main
+
+    monkeypatch.setattr("skillware.cli.cmd_examples", lambda **kwargs: 0)
+
+    argv = sys.argv
+    sys.argv = ["skillware", "examples", "compliance/tos_evaluator"]
+    try:
+        with pytest.raises(SystemExit) as exc:
+            main()
+        assert exc.value.code == 0
+    finally:
+        sys.argv = argv

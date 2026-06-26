@@ -146,10 +146,15 @@ def _example_counts_by_skill(rows: List[Dict[str, Any]]) -> Dict[str, int]:
     return dict(counts)
 
 
-def _load_examples_index() -> Tuple[List[Dict[str, Any]], Optional[_EXAMPLES_INDEX_SOURCE]]:
+def _load_examples_index() -> (
+    Tuple[List[Dict[str, Any]], Optional[_EXAMPLES_INDEX_SOURCE]]
+):
     readme_path = _examples_readme_path()
     if readme_path is not None:
-        return _parse_examples_index_text(readme_path.read_text(encoding="utf-8")), readme_path
+        return (
+            _parse_examples_index_text(readme_path.read_text(encoding="utf-8")),
+            readme_path,
+        )
 
     text = _fetch_examples_readme_from_github()
     if text is not None:

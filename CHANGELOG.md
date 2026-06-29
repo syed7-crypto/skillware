@@ -17,6 +17,10 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 
 - **Documentation**: README Stats section and live PyPI download badges (pepy / PyPI Stats dashboards, header `DLs ↓` total).
 
+### Changed
+
+- **Documentation**: Aligned CLI and examples docs (`docs/usage/cli.md`, `examples/README.md`) with the `skillware test` / `skillware examples` behavior shipped in 0.3.8–0.3.9 (#191).
+
 ## [0.3.9] - 2026-06-26
 
 ### Fixed

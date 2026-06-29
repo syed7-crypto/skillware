@@ -333,6 +333,14 @@ Place each skill under one top-level directory under `skills/`. Use an existing 
 | `optimization` | Middleware, compression, efficiency | `prompt_rewriter` |
 | `wellness` | Coaching guardrails, mental health support | `mental_coach` |
 
+### Choosing a category
+
+The category list above is illustrative. When creating a new skill, use an existing category folder if it fits your skill's purpose. 
+
+If your skill requires a brand new category that isn't listed, you are welcome to propose it! You can create a new top-level folder under `skills/` (for example, `skills/my_new_category/`). 
+
+Keep in mind that the final Registry ID for your skill is automatically generated based on its path in the repository as `category/skill_name` (e.g., `office/pdf_form_filler`).
+
 Skill IDs follow `category/skill_name` and should match the path under `skills/`. For the live registry, see [Skill Library](docs/skills/README.md). Propose new top-level categories in an issue before adding a folder.
 
 ---

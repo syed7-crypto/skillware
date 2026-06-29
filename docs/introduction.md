@@ -31,6 +31,7 @@ In integration, a "Skill" is not just a function. It is a living unit of capabil
 ## The Architecture: How It Works
 
 Skillware relies on a strict, modular layout. Instead of hardcoding tools into your primary application, you maintain a structured registry of capabilities:
+Domain-specific categories within the repository logically organize skills to ensure scalability.
 
 ```text
 Skillware/

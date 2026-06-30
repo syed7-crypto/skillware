@@ -3,17 +3,74 @@
 Welcome to the official catalog of Skillware capabilities. New here? Start with the [project README](../../README.md).
 
 Browse by category below, or run `skillware list` after `pip install skillware` to see locally available skills.
-## Skill Categories
 
-To keep our library organized, skills are grouped into the categories below. If you are adding a new skill, please place it in the correct folder based on this table.
+## Office
+Skills for document processing, email automation, and productivity.
 
-| Category Folder | Description | Example Skills |
-| :--- | :--- | :--- |
-| `compliance` | Rules, regulations, and legal standards. | None yet |
-| `data_engineering` | Data pipelines, cleaning, and ETL tools. | None yet |
-| `defi` | Decentralized finance and smart contract tools. | None yet |
-| `dev_tools` | Developer utilities and testing environments. | None yet |
-| `finance` | Traditional financial analysis and wallet checks. | `wallet_screening` |
-| `office` | Document processing, spreadsheets, and emails. | `pdf_form_filler` |
-| `optimization` | Performance tuning and math models. | None yet |
-| `wellness` | Health, fitness, and work-life balance. | None yet |
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[PDF Form Filler](pdf_form_filler.md)** | `office/pdf_form_filler` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Fills AcroForm-based PDFs by mapping user instructions to detected form fields using LLM-based semantic understanding. |
+
+## Finance
+Tools for financial analysis, blockchain interaction, and regulatory compliance.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[Wallet Screening](wallet_screening.md)** | `finance/wallet_screening` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Comprehensive risk assessment for Ethereum wallets. Checks sanctions lists (OFAC, FBI) and identifies interactions with malicious contracts (Mixers, Scams). |
+
+## DeFi
+On-chain execution and trading for dedicated agent wallets (structured intent, previews, confirmations).
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[EVM Transaction Handler](evm_tx_handler.md)** | `defi/evm_tx_handler` | [@Hendobox](https://github.com/Hendobox) | Uni V2 quote, preview, execute, and transfer on Ethereum/Base from structured intent. |
+
+## Optimization
+Middleware skills that operate on text or state to increase performance, security, or efficiency.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[Prompt Token Rewriter](prompt_rewriter.md)** | `optimization/prompt_rewriter` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Aggressively compresses massive prompts or context histories while retaining semantic meaning to save tokens. |
+
+## Data Engineering
+Skills tailored for generating, parsing, and orchestrating large datasets for machine learning or analytics workflows.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[Synthetic Data Generator](synthetic_generator.md)** | `data_engineering/synthetic_generator` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Generates high-entropy structured synthetic data for model fine-tuning to avoid mode collapse. |
+| **[Novelty Extractor](novelty_extractor.md)** | `data_engineering/novelty_extractor` | [@rizzoMartin](https://github.com/rizzoMartin) | Filters a text dataset by semantic novelty, retaining only chunks that carry new information above a configurable threshold. |
+
+## Compliance
+Enforces privacy, guardrails, and secure handling of sensitive data before it reaches external endpoints.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[PII Masker](pii_masker.md)** | `compliance/pii_masker` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | High-precision, local PII (Personally Identifiable Information) detection and redaction using the micro-f1-mask model. |
+| **[MiCA Module](mica_module.md)** | `compliance/mica_module` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Self-contained local Policy Enforcement and RAG engine strictly adhering to MiCA crypto-asset regulation. |
+| **[Terms of Service Evaluator](tos_evaluator.md)** | `compliance/tos_evaluator` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | Local-first evaluation of robots.txt and website legal pages to decide whether an intended automated action appears permissible. |
+
+## Dev Tools
+Skills that assist developers in understanding codebases, planning changes, and resolving issues across any repository.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[Issue Resolver](issue_resolver.md)** | `dev_tools/issue_resolver` | [@rosspeili](https://github.com/rosspeili) ([@ARPAHLS](https://github.com/ARPAHLS)) | GitHub issue URL prep, nine-stage agent workflow, conditional verify/commit gates, and commit-message validation. |
+
+## Wellness
+Supportive coaching guardrails, crisis triage, and grounded psychoeducation for host agents.
+
+| Skill | ID | Issuer | Description |
+| :--- | :--- | :--- | :--- |
+| **[Mental Coach](mental_coach.md)** | `wellness/mental_coach` | [@mrmasa88](https://github.com/mrmasa88) (AO) | Deterministic wellness coaching firewall with crisis triage, scope limits, and cited KB retrieval. |
+
+---
+
+## Installing Skills
+
+Registry skills live under `skills/<category>/<skill_name>/` in the repository and in the PyPI package. After `pip install skillware`, load by ID from your project (`./skills/...`), via `SKILLWARE_SKILL_PATH`, or from the bundled registry copy under `site-packages/skills/`. See [Usage guides](../usage/README.md#finding-skills-on-disk).
+
+```python
+from skillware.core.loader import SkillLoader
+
+# Load by registry ID (category/skill_name)
+skill = SkillLoader.load_skill("finance/wallet_screening")

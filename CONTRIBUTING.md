@@ -16,6 +16,15 @@ This document is the single entry point for how to contribute. If you are an **A
 | [Pull request process](#pull-request-process) | From issue to merge |
 | [Skill Package Standard](#skill-package-standard) | Required layout for registry skills |
 | [Skill categories](#skill-categories) | Folder taxonomy under `skills/` |
+
+### Choosing a category
+
+The category list above is illustrative. When creating a new skill, use an existing category folder if it fits your skill's purpose. 
+
+If your skill requires a brand new category that isn't listed, you are welcome to propose it! You can create a new top-level folder under `skills/` (for example, `skills/my_new_category/`). 
+
+Keep in mind that the final Registry ID for your skill is automatically generated based on its path in the repository as `category/skill_name` (e.g., `office/pdf_form_filler`).
+
 | [What to avoid](#what-to-avoid) | Anti-patterns |
 | [Safety and security](#safety-and-security) | High-risk skills |
 | [Related documents](#related-documents) | Code of conduct, testing, templates |

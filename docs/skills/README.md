@@ -74,6 +74,5 @@ from skillware.core.loader import SkillLoader
 
 # Load by registry ID (category/skill_name)
 skill = SkillLoader.load_skill("finance/wallet_screening")
-
 ```
 See [Usage guides](../usage/README.md) for provider adapters, [Agent loops](../usage/agent_loops.md) for the shared execute pattern, and [Testing](../TESTING.md) for running skill tests before opening a PR.skill tests before opening a PR.

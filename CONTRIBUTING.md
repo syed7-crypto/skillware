@@ -333,7 +333,7 @@ Place each skill under one top-level directory under `skills/`. Use an existing 
 | `optimization` | Middleware, compression, efficiency | `prompt_rewriter` |
 | `wellness` | Coaching guardrails, mental health support | `mental_coach` |
 
-## Choosing a category
+### Choosing a category
 
 The category list above is illustrative. When creating a new skill, use an existing category folder if it fits your skill's purpose. 
 

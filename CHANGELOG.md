@@ -8,6 +8,9 @@ Contributors add user-facing entries under `[Unreleased]` in the same PR. Mainta
 
 ## [Unreleased]
 
+### Documentation
+- Category selection guidance for contributors (Fixes #204)
+
 ## [0.4.0] - 2026-06-30
 
 ### Added
